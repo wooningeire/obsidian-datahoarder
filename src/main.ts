@@ -1,7 +1,8 @@
-import {App, Editor, MarkdownView, Modal, Notice, Plugin} from 'obsidian';
+import {App, Editor, MarkdownView, Modal, Notice, Plugin, WorkspaceLeaf} from 'obsidian';
 import {DEFAULT_SETTINGS, MyPluginSettings, SampleSettingTab} from "./settings";
 import {createSqljs} from "./sqljs";
 import { Database } from "sql.js";
+import { ExampleView, VIEW_TYPE_EXAMPLE } from 'CounterView';
 
 
 export default class DatahoarderPlugin extends Plugin {
@@ -17,6 +18,14 @@ export default class DatahoarderPlugin extends Plugin {
 		const db = new sqljs.Database();
 		this.db = db;
 
+		this.registerView(
+			VIEW_TYPE_EXAMPLE,
+			(leaf) => new ExampleView(leaf)
+		);
+
+		this.addRibbonIcon('dice', 'Activate view', () => {
+			this.activateView();
+		});
 
 		// This creates an icon in the left ribbon.
 		this.addRibbonIcon('dice', 'Sample', (evt: MouseEvent) => {
@@ -99,6 +108,27 @@ export default class DatahoarderPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+	async activateView() {
+		const { workspace } = this.app;
+
+		let leaf: WorkspaceLeaf | null = null;
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_EXAMPLE);
+
+		if (leaves.length > 0) {
+			// A leaf with our view already exists, use that
+			leaf = leaves[0] ?? null;
+		} else {
+			// Our view could not be found in the workspace, create a new leaf
+			// in the right sidebar for it
+			leaf = workspace.getRightLeaf(false);
+			await leaf?.setViewState({ type: VIEW_TYPE_EXAMPLE, active: true });
+		}
+
+		// "Reveal" the leaf in case it is in a collapsed sidebar
+		if (leaf !== null) {
+			workspace.revealLeaf(leaf);
+		}
 	}
 }
 

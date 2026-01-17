@@ -3,6 +3,8 @@ import process from "process";
 import { builtinModules } from 'node:module';
 import { copyFileSync } from 'node:fs';
 
+import esbuildSvelte from 'esbuild-svelte';
+import { sveltePreprocess } from 'svelte-preprocess';
 
 const banner =
 `/*
@@ -25,6 +27,12 @@ const context = await esbuild.context({
 	},
 	entryPoints: ["src/main.ts"],
 	bundle: true,
+	plugins: [
+		esbuildSvelte({
+			compilerOptions: { css: 'injected' },
+			preprocess: [sveltePreprocess()],
+		}),
+	],
 	external: [
 		"obsidian",
 		"electron",
