@@ -1,13 +1,22 @@
 import {App, Editor, MarkdownView, Modal, Notice, Plugin} from 'obsidian';
 import {DEFAULT_SETTINGS, MyPluginSettings, SampleSettingTab} from "./settings";
+import {createSqljs} from "./sqljs";
+import { Database } from "sql.js";
 
-// Remember to rename these classes and interfaces!
 
-export default class MyPlugin extends Plugin {
+export default class DatahoarderPlugin extends Plugin {
 	settings: MyPluginSettings;
+	private db: Database | null = null;
+
 
 	async onload() {
 		await this.loadSettings();
+
+		const sqljs = await createSqljs(this.app, this.manifest);
+
+		const db = new sqljs.Database();
+		this.db = db;
+
 
 		// This creates an icon in the left ribbon.
 		this.addRibbonIcon('dice', 'Sample', (evt: MouseEvent) => {
@@ -15,11 +24,20 @@ export default class MyPlugin extends Plugin {
 			new Notice('This is a notice!');
 		});
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
 		const statusBarItemEl = this.addStatusBarItem();
 		statusBarItemEl.setText('Status bar text');
 
+		this.addCommand({
+			id: "save-db",
+			name: "Save DB",
+			callback: async () => {
+				const data = db.export();
+				await this.app.vault.adapter.writeBinary("./data.sqlite", new Uint8Array(data).buffer);
+			},
+		})
+
 		// This adds a simple command that can be triggered anywhere
+
 		this.addCommand({
 			id: 'open-modal-simple',
 			name: 'Open modal (simple)',
@@ -71,7 +89,9 @@ export default class MyPlugin extends Plugin {
 	}
 
 	onunload() {
+		this.db?.close();
 	}
+
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<MyPluginSettings>);

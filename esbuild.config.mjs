@@ -1,6 +1,8 @@
 import esbuild from "esbuild";
 import process from "process";
 import { builtinModules } from 'node:module';
+import { copyFileSync } from 'node:fs';
+
 
 const banner =
 `/*
@@ -10,6 +12,12 @@ if you want to view the source, please visit the github repository of this plugi
 `;
 
 const prod = (process.argv[2] === "production");
+
+try {
+	copyFileSync("node_modules/sql.js/dist/sql-wasm.wasm", "sql-wasm.wasm");
+} catch (e) {
+	console.warn("Could not copy sql-wasm.wasm (deps might not be installed yet):", e.message);
+}
 
 const context = await esbuild.context({
 	banner: {
