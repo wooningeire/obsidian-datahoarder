@@ -1,5 +1,5 @@
-import { App, PluginManifest } from "obsidian";
-import initSqlJs, { Database, SqlJsStatic } from "sql.js";
+import { App, type PluginManifest } from "obsidian";
+import initSqlJs from "sql.js";
 
 export const createSqljs = async (app: App, manifest: PluginManifest) => {
     const sqljsWasmPath = `${manifest.dir}/sql-wasm.wasm`;

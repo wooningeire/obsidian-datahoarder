@@ -2,7 +2,7 @@ import {App, Editor, MarkdownView, Modal, Notice, Plugin, WorkspaceLeaf} from 'o
 import {DEFAULT_SETTINGS, MyPluginSettings, SampleSettingTab} from "./settings";
 import {createSqljs} from "./sqljs";
 import { Database } from "sql.js";
-import { ExampleView, VIEW_TYPE_EXAMPLE } from 'CounterView';
+import { ExampleView, VIEW_TYPE_EXAMPLE } from './EditorView';
 
 
 export default class DatahoarderPlugin extends Plugin {
@@ -15,12 +15,14 @@ export default class DatahoarderPlugin extends Plugin {
 
 		const sqljs = await createSqljs(this.app, this.manifest);
 
-		const db = new sqljs.Database();
+		const dbData = await this.app.vault.adapter.readBinary("./.datahoarder/db.sqlite");
+
+		const db = new sqljs.Database(new Uint8Array(dbData));
 		this.db = db;
 
 		this.registerView(
 			VIEW_TYPE_EXAMPLE,
-			(leaf) => new ExampleView(leaf)
+			(leaf) => new ExampleView(leaf, db),
 		);
 
 		this.addRibbonIcon('dice', 'Activate view', () => {
@@ -37,11 +39,20 @@ export default class DatahoarderPlugin extends Plugin {
 		statusBarItemEl.setText('Status bar text');
 
 		this.addCommand({
+			id: "create-table",
+			name: "Create table",
+			callback: () => {
+				this.db?.exec("CREATE TABLE IF NOT EXISTS Goals (id BIGINT UNSIGNED PRIMARY KEY, name TEXT)");
+				this.db?.exec("INSERT INTO Goals (id, name) VALUES (1, 'Goal 1')");
+			}
+		})
+
+		this.addCommand({
 			id: "save-db",
 			name: "Save DB",
 			callback: async () => {
 				const data = db.export();
-				await this.app.vault.adapter.writeBinary("./data.sqlite", new Uint8Array(data).buffer);
+				await this.app.vault.adapter.writeBinary("./.datahoarder/db.sqlite", new Uint8Array(data).buffer);
 			},
 		})
 
@@ -109,7 +120,8 @@ export default class DatahoarderPlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
-	async activateView() {
+
+	private async activateView() {
 		const { workspace } = this.app;
 
 		let leaf: WorkspaceLeaf | null = null;
