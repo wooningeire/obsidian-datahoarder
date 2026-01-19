@@ -1,5 +1,5 @@
 import { ItemView, WorkspaceLeaf } from 'obsidian';
-import HoardEditor from './HoardEditor.svelte';
+import HoardEditor from './HoardView.svelte';
 import { mount, unmount } from 'svelte';
 import type { DatahoarderDbOps } from './dbOps/DatahoarderDbOps';
 

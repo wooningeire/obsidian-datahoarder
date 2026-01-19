@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS Tables(
     id INTEGER PRIMARY KEY,
     label TEXT,
     created_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS Columns(
@@ -10,20 +10,20 @@ CREATE TABLE IF NOT EXISTS Columns(
     table_id INTEGER REFERENCES Tables(id),
     label TEXT,
     created_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS Rows(
     id INTEGER PRIMARY KEY,
     table_id INTEGER REFERENCES Tables(id),
     created_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS Values(
+CREATE TABLE IF NOT EXISTS Cells(
     row_id INTEGER REFERENCES Rows(id),
     column_id INTEGER REFERENCES Columns(id),
     value TEXT,
 
-    PRIMARY KEY (row_id, column_id),
+    PRIMARY KEY (row_id, column_id)
 );

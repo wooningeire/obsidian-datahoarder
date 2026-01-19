@@ -1,5 +1,6 @@
 import type { App, PluginManifest } from "obsidian";
 import type { Database } from "sql.js";
+import { Notice } from "obsidian";
 
 export class DatahoarderDbOps {
     constructor(
@@ -9,7 +10,12 @@ export class DatahoarderDbOps {
     ) {}
 
     async setUpSchema() {
-        await this.db.exec(await this.app.vault.adapter.read(`./${this.manifest.dir}/schema.sql`));
+        try {
+            this.db.exec(await this.app.vault.adapter.read(`./${this.manifest.dir}/src/dbOps/schema.sql`));
+            new Notice("Schema set up successfully");
+        } catch (e) {
+            new Notice("Failed to set up schema: " + e);
+        }
     }
 
     async save() {
@@ -17,11 +23,68 @@ export class DatahoarderDbOps {
         await this.app.vault.adapter.writeBinary("./.datahoarder/db.sqlite", new Uint8Array(data).buffer);
     }
 
+    private getLastInsertId(): number {
+        const results = this.db.exec("SELECT last_insert_rowid()");
+        const id = results[0]?.values[0][0];
+        if (typeof id === 'number') return id;
+        throw new Error("Failed to retrieve last insert ID");
+    }
+
+    async createTable(label: string) {
+        this.db.run("INSERT INTO Tables (label) VALUES (?)", [label]);
+        return this.getLastInsertId();
+    }
+
+    async addColumn(tableId: number, label: string) {
+        this.db.run("INSERT INTO Columns (table_id, label) VALUES (?, ?)", [tableId, label]);
+        return this.getLastInsertId();
+    }
+
+    async addRow(tableId: number) {
+        this.db.run("INSERT INTO Rows (table_id) VALUES (?)", [tableId]);
+        return this.getLastInsertId();
+    }
+
+    async updateCell(rowId: number, columnId: number, value: string) {
+        this.db.run(
+            "INSERT OR REPLACE INTO Cells (row_id, column_id, value) VALUES (?, ?, ?)",
+            [rowId, columnId, value]
+        );
+    }
+
     selectTables() {
         const results = this.db.exec("SELECT id, label FROM Tables")[0]?.values ?? [];
         return results.map(result => ({
-            id: result[0],
-            label: result[1],
+            id: result[0] as number,
+            label: result[1] as string,
+        }));
+    }
+
+    selectColumns(tableId: number) {
+        const results = this.db.exec("SELECT id, label FROM Columns WHERE table_id = ?", [tableId])[0]?.values ?? [];
+        return results.map(result => ({
+            id: result[0] as number,
+            label: result[1] as string,
+        }));
+    }
+
+    selectRows(tableId: number) {
+        const results = this.db.exec("SELECT id FROM Rows WHERE table_id = ?", [tableId])[0]?.values ?? [];
+        return results.map(result => ({
+            id: result[0] as number,
+        }));
+    }
+
+    selectCells(tableId: number) {
+        const results = this.db.exec(
+            "SELECT row_id, column_id, value FROM Cells JOIN Rows ON Cells.row_id = Rows.id WHERE Rows.table_id = ?", 
+            [tableId]
+        )[0]?.values ?? [];
+        
+        return results.map(result => ({
+            row_id: result[0] as number,
+            column_id: result[1] as number,
+            value: result[2] as string,
         }));
     }
 }
