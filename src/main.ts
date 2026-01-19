@@ -54,12 +54,6 @@ export default class DatahoarderPlugin extends Plugin {
 			callback: () => dbOps.setUpSchema(),
 		})
 
-		this.addCommand({
-			id: "save-db",
-			name: "Save DB",
-			callback: () => dbOps.save(),
-		})
-
 		// This adds a simple command that can be triggered anywhere
 
 		this.addCommand({
