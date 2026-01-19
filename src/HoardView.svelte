@@ -66,29 +66,51 @@ async function createTable() {
     }
 }
 
-const addColumn = async ({
+const addColumn = ({
     tableId,
     label,
+    datatype,
 }: {
     tableId: number,
     label: string,
+    datatype: string,
 }) => {
-    await dbOps.addColumn(tableId, label);
+    const columnId = dbOps.addColumn(tableId, label, datatype);
+    refreshTableInfo(tableId);
+    modified = true;
+    return columnId;
+};
+
+const updateColumn = ({
+    columnId,
+    label,
+    datatype,
+}: {
+    columnId: number,
+    label?: string,
+    datatype?: string,
+}) => {
+    if (label) {
+        dbOps.updateColumnLabel(columnId, label);
+    }
+    if (datatype) {
+        dbOps.updateColumnDatatype(columnId, datatype);
+    }
+    refreshTables(); // Or just the specific table info
+    modified = true;
+};
+
+const addRow = (tableId: number) => {
+    dbOps.addRow(tableId);
     refreshTableInfo(tableId);
     modified = true;
 };
 
-const addRow = async (tableId: number) => {
-    await dbOps.addRow(tableId);
-    refreshTableInfo(tableId);
-    modified = true;
-};
-
-const updateCell = async (rowId: number, columnId: number, value: string) => {
+const updateCell = (rowId: number, columnId: number, value: string) => {
     if (!cellsByRowByTable[rowId]) cellsByRowByTable[rowId] = {};
     cellsByRowByTable[rowId][columnId] = value;
     
-    await dbOps.updateCell(rowId, columnId, value);
+    dbOps.updateCell(rowId, columnId, value);
     modified = true;
 };
 
@@ -125,6 +147,7 @@ const save = async () => {
                 rows={rowsByTable[table.id] ?? []}
                 cells={cellsByRowByTable[table.id] ?? {}}
                 onAddColumn={addColumn}
+                onUpdateColumn={updateColumn}
                 onAddRow={addRow}
                 onUpdateCell={updateCell}
             />

@@ -30,22 +30,30 @@ export class DatahoarderDbOps {
         throw new Error("Failed to retrieve last insert ID");
     }
 
-    async createTable(label: string) {
+    createTable(label: string) {
         this.db.run("INSERT INTO Tables (label) VALUES (?)", [label]);
         return this.getLastInsertId();
     }
 
-    async addColumn(tableId: number, label: string) {
-        this.db.run("INSERT INTO Columns (table_id, label) VALUES (?, ?)", [tableId, label]);
+    addColumn(tableId: number, label: string, datatype: string) {
+        this.db.run("INSERT INTO Columns (table_id, label, datatype) VALUES (?, ?, ?)", [tableId, label, datatype]);
         return this.getLastInsertId();
     }
 
-    async addRow(tableId: number) {
+    updateColumnLabel(columnId: number, label: string) {
+        this.db.run("UPDATE Columns SET label = ? WHERE id = ?", [label, columnId]);
+    }
+
+    updateColumnDatatype(columnId: number, datatype: string) {
+        this.db.run("UPDATE Columns SET datatype = ? WHERE id = ?", [datatype, columnId]);
+    }
+
+    addRow(tableId: number) {
         this.db.run("INSERT INTO Rows (table_id) VALUES (?)", [tableId]);
         return this.getLastInsertId();
     }
 
-    async updateCell(rowId: number, columnId: number, value: string) {
+    updateCell(rowId: number, columnId: number, value: string) {
         this.db.run(
             "INSERT OR REPLACE INTO Cells (row_id, column_id, value) VALUES (?, ?, ?)",
             [rowId, columnId, value]
@@ -61,10 +69,11 @@ export class DatahoarderDbOps {
     }
 
     selectColumns(tableId: number) {
-        const results = this.db.exec("SELECT id, label FROM Columns WHERE table_id = ?", [tableId])[0]?.values ?? [];
+        const results = this.db.exec("SELECT id, label, datatype FROM Columns WHERE table_id = ?", [tableId])[0]?.values ?? [];
         return results.map(result => ({
             id: result[0] as number,
             label: result[1] as string,
+            datatype: result[2] as string,
         }));
     }
 

@@ -1,5 +1,7 @@
 
 <script lang="ts">
+	import HoardCell from "HoardCell.svelte";
+
 let {
     row,
     columns,
@@ -15,10 +17,11 @@ let {
 
 {#each columns as column}
     <div class="cell">
-        <input 
-            type="text" 
+        <HoardCell 
+            {row}
+            {column}
             value={cells[row.id]?.[column.id] ?? ""} 
-            onchange={(e) => onUpdateCell(row.id, column.id, e.currentTarget.value)} 
+            {onUpdateCell}
         />
     </div>
 {/each}
