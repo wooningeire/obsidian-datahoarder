@@ -6,6 +6,7 @@ import { Notice } from "obsidian";
 import HoardTable from "HoardTable.svelte";
 import HoardEnum from "HoardEnum.svelte";
 import { store } from "Store.svelte";
+	import { SvelteMap } from "svelte/reactivity";
 
 let {
     dbOps,
@@ -24,7 +25,6 @@ let rowsByTable = $state<Record<number, ReturnType<typeof dbOps.selectRows>>>({}
 let cellsByRowByTable = $state<Record<number, Record<number, Record<number, string>>>>({});
 
 let newEnumName = $state("");
-let variantsByEnum = $state<Record<number, ReturnType<typeof dbOps.selectEnumVariants>>>({});
 
 const refreshTables = () => {
     try {
@@ -55,9 +55,12 @@ const refreshTableInfo = (tableId: number) => {
 const refreshEnums = () => {
     try {
         store.enums = dbOps.selectEnums();
+
+        const enumVariantsByEnumId = new SvelteMap<number, any>();
         for (const enumItem of store.enums.values()) {
-            variantsByEnum[enumItem.id] = dbOps.selectEnumVariants(enumItem.id);
+            enumVariantsByEnumId.set(enumItem.id, dbOps.selectEnumVariants(enumItem.id));
         }
+        store.enumVariantsByEnumId = enumVariantsByEnumId;
     } catch (error) {
         console.error("Failed to refresh enums:", error);
         new Notice("Failed to load enums: " + error);
@@ -153,7 +156,7 @@ const createEnum = () => {
 
 const addEnumVariant = (enumId: number, label: string) => {
     const variantId = dbOps.addEnumVariant(enumId, label);
-    variantsByEnum[enumId] = dbOps.selectEnumVariants(enumId);
+    store.enumVariantsByEnumId.set(enumId, dbOps.selectEnumVariants(enumId));
     modified = true;
     return variantId;
 };
@@ -195,7 +198,7 @@ const updateEnumVariant = (variantId: number, label: string) => {
         {#each store.enums.values() as enumItem}
             <HoardEnum
                 enumData={enumItem}
-                variants={variantsByEnum[enumItem.id] ?? []}
+                variants={store.enumVariantsByEnumId.get(enumItem.id) ?? []}
                 onAddVariant={addEnumVariant}
                 onUpdateVariant={updateEnumVariant}
             />

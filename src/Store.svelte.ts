@@ -1,7 +1,9 @@
+import { SvelteMap } from "svelte/reactivity";
 import type { Table } from "./dbOps/DatahoarderDbOps";
 
-let tables = $state(new Map<number, Table>());
-let enums = $state(new Map<number, any>());
+let tables = $state<Map<number, Table>>(new SvelteMap());
+let enums = $state<Map<number, any>>(new SvelteMap());
+let enumVariantsByEnumId = $state<Map<number, any>>(new SvelteMap());
 
 export class Store {
     // tables = $state(new Map<number, Table>());
@@ -19,6 +21,13 @@ export class Store {
     }
     set enums(value: Map<number, any>) {
         enums = value;
+    }
+
+    get enumVariantsByEnumId() {
+        return enumVariantsByEnumId;
+    }
+    set enumVariantsByEnumId(value: Map<number, any>) {
+        enumVariantsByEnumId = value;
     }
 }
 
