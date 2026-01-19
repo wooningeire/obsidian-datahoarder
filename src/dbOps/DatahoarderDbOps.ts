@@ -96,4 +96,40 @@ export class DatahoarderDbOps {
             value: result[2] as string,
         }));
     }
+
+    // --- Enum Operations ---
+
+    createEnum(label: string) {
+        this.db.run("INSERT INTO Enums (label) VALUES (?)", [label]);
+        return this.getLastInsertId();
+    }
+
+    selectEnums() {
+        const results = this.db.exec("SELECT id, label FROM Enums")[0]?.values ?? [];
+        return results.map(result => ({
+            id: result[0] as number,
+            label: result[1] as string,
+        }));
+    }
+
+    updateEnumLabel(enumId: number, label: string) {
+        this.db.run("UPDATE Enums SET label = ? WHERE id = ?", [label, enumId]);
+    }
+
+    addEnumVariant(enumId: number, label: string) {
+        this.db.run("INSERT INTO EnumVariants (enum_id, label) VALUES (?, ?)", [enumId, label]);
+        return this.getLastInsertId();
+    }
+
+    selectEnumVariants(enumId: number) {
+        const results = this.db.exec("SELECT id, label FROM EnumVariants WHERE enum_id = ?", [enumId])[0]?.values ?? [];
+        return results.map(result => ({
+            id: result[0] as number,
+            label: result[1] as string,
+        }));
+    }
+
+    updateEnumVariantLabel(variantId: number, label: string) {
+        this.db.run("UPDATE EnumVariants SET label = ? WHERE id = ?", [label, variantId]);
+    }
 }

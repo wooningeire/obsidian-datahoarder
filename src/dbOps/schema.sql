@@ -28,3 +28,28 @@ CREATE TABLE IF NOT EXISTS Cells(
 
     PRIMARY KEY (row_id, column_id)
 );
+
+
+CREATE TABLE IF NOT EXISTS Enums(
+    id INTEGER PRIMARY KEY,
+    label TEXT,
+    created_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS EnumVariants(
+    id INTEGER PRIMARY KEY,
+    enum_id INTEGER REFERENCES Enums(id) ON DELETE CASCADE,
+    label TEXT,
+    created_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- CREATE TABLE IF NOT EXISTS EnumVariantColumns(
+--     id INTEGER PRIMARY KEY,
+--     variant_id INTEGER REFERENCES EnumVariants(id) ON DELETE CASCADE,
+--     label TEXT,
+--     datatype TEXT,
+--     created_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+--     updated_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+-- );

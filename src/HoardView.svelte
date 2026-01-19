@@ -5,6 +5,7 @@ import type { DatahoarderDbOps } from "./dbOps/DatahoarderDbOps";
 import { Notice } from "obsidian";
 	import { error } from "console";
 	import HoardTable from "HoardTable.svelte";
+import HoardEnum from "HoardEnum.svelte";
 
 let {
     dbOps,
@@ -20,6 +21,10 @@ let columnsByTable = $state<Record<number, ReturnType<typeof dbOps.selectColumns
 let rowsByTable = $state<Record<number, ReturnType<typeof dbOps.selectRows>>>({});
 
 let cellsByRowByTable = $state<Record<number, Record<number, Record<number, string>>>>({});
+
+let enums = $state<ReturnType<typeof dbOps.selectEnums>>([]);
+let newEnumName = $state("");
+let variantsByEnum = $state<Record<number, ReturnType<typeof dbOps.selectEnumVariants>>>({});
 
 const refreshTables = () => {
     try {
@@ -47,8 +52,21 @@ const refreshTableInfo = (tableId: number) => {
     cellsByRowByTable[tableId] = cellsByRow;
 }
 
+const refreshEnums = () => {
+    try {
+        enums = dbOps.selectEnums();
+        for (const enumItem of enums) {
+            variantsByEnum[enumItem.id] = dbOps.selectEnumVariants(enumItem.id);
+        }
+    } catch (error) {
+        console.error("Failed to refresh enums:", error);
+        new Notice("Failed to load enums: " + error);
+    }
+};
+
 onMount(() => {
     refreshTables();
+    refreshEnums();
 });
 
 async function createTable() {
@@ -118,7 +136,38 @@ const save = async () => {
     await dbOps.save();
     modified = false;
 };
+
+const createEnum = () => {
+    if (!newEnumName) return;
+    try {
+        dbOps.createEnum(newEnumName);
+        newEnumName = "";
+        refreshEnums();
+        modified = true;
+        new Notice("Enum created");
+    } catch (e) {
+        console.error("Failed to create enum:", e);
+        new Notice("Failed to create enum: " + e);
+    }
+}
+
+const addEnumVariant = (enumId: number, label: string) => {
+    const variantId = dbOps.addEnumVariant(enumId, label);
+    variantsByEnum[enumId] = dbOps.selectEnumVariants(enumId);
+    modified = true;
+    return variantId;
+};
+
+const updateEnumVariant = (variantId: number, label: string) => {
+    dbOps.updateEnumVariantLabel(variantId, label);
+    refreshEnums();
+    modified = true;
+};
 </script>
+
+
+
+
 
 <div class="hoard-editor">
     <div class="controls">
@@ -129,6 +178,31 @@ const save = async () => {
             Save
         </button>
     </div>
+    
+    
+    <h2>Enums</h2>
+
+    <div class="create-enum">
+        <input
+            type="text"
+            bind:value={newEnumName}
+            placeholder="New enum name"
+        />
+        <button onclick={createEnum}>Create enum</button>
+    </div>
+
+    <div class="enums-list">
+        {#each enums as enumItem}
+            <HoardEnum
+                enumData={enumItem}
+                variants={variantsByEnum[enumItem.id] ?? []}
+                onAddVariant={addEnumVariant}
+                onUpdateVariant={updateEnumVariant}
+            />
+        {/each}
+    </div>
+
+    <h2>Tables</h2>
 
     <div class="create-table">
         <input
@@ -156,20 +230,33 @@ const save = async () => {
 </div>
 
 <style>
-    .hoard-editor {
-        padding: 1rem;
-    }
-    .controls {
-        margin-bottom: 1rem;
-    }
-    .create-table {
-        margin-bottom: 2rem;
-        display: flex;
-        gap: 0.5rem;
-    }
-    .tables-list {
-        display: flex;
-        flex-direction: column;
-        gap: 2rem;
-    }
+.hoard-editor {
+    padding: 1rem;
+}
+
+.create-table {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.tables-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.create-enum {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.enums-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+h2 {
+    margin: 0;
+}
 </style>

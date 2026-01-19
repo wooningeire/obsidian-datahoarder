@@ -92,11 +92,15 @@ let activeColumnId = $state<number | null>(null);
     --n-columns: 1;
     
     display: grid;
+    max-width: 100%;
     grid-template-columns: repeat(calc(var(--n-columns) + 1), auto);
-
     margin-top: 1rem;
     padding: 0.5rem;
-    border: 1px solid #0000003f;
+
+    overflow-x: auto;
+
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 0.25rem;
 }
 
 .column-header {
@@ -119,5 +123,9 @@ let activeColumnId = $state<number | null>(null);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-radius: 4px;
 
+}
+
+h3 {
+    margin: 0;
 }
 </style>

@@ -23,7 +23,7 @@ let {
 <div
     class="column-settings"
 >
-    <h3>Edit column</h3>
+    <h4>Edit column</h4>
 
     <div class="column-settings-form">
         <label for="column-label">Label</label>
@@ -52,7 +52,7 @@ let {
     align-items: center;
 }
 
-h3 {
+h4 {
     margin: 0;
 }
 </style>
