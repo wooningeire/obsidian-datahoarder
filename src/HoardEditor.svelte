@@ -1,18 +1,24 @@
 <script lang="ts">
-import type { Database } from "sql.js";
-import { onMount } from "svelte";
+	import { onMount } from "svelte";
+import type { DatahoarderDbOps } from "./dbOps/DatahoarderDbOps";
 let {
-    db,
+    dbOps,
 }: {
-    db: Database,
+    dbOps: DatahoarderDbOps,
 } = $props();
-    
-const results = $derived(db.exec("SELECT * FROM Goals"));
 
+let tables = $state<ReturnType<typeof dbOps.selectTables>>([]);
+
+onMount(() => {
+    tables = dbOps.selectTables();
+});
 </script>
 
-{#each results[0]?.values as goal}
-    {goal[1]}
+<h1>Tables</h1>
+<div>{tables.length} tables</div>
+
+{#each tables as table}
+    <div>{table.label}</div>
 {/each}
 
 <style>

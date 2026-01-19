@@ -1,9 +1,7 @@
 import { ItemView, WorkspaceLeaf } from 'obsidian';
-
-// Import the Counter Svelte component and the `mount` and `unmount` methods.
 import HoardEditor from './HoardEditor.svelte';
 import { mount, unmount } from 'svelte';
-import type { Database } from 'sql.js';
+import type { DatahoarderDbOps } from './dbOps/DatahoarderDbOps';
 
 export const VIEW_TYPE_EXAMPLE = 'example-view';
 
@@ -13,7 +11,7 @@ export class ExampleView extends ItemView {
 
   constructor(
     leaf: WorkspaceLeaf,
-    private db: Database,
+    private dbOps: DatahoarderDbOps,
   ) {
     super(leaf);
   }
@@ -31,7 +29,7 @@ export class ExampleView extends ItemView {
     this.counter = mount(HoardEditor, {
       target: this.contentEl,
       props: {
-        db: this.db,
+        dbOps: this.dbOps,
       }
     });
   }

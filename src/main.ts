@@ -1,8 +1,19 @@
 import {App, Editor, MarkdownView, Modal, Notice, Plugin, WorkspaceLeaf} from 'obsidian';
-import {DEFAULT_SETTINGS, MyPluginSettings, SampleSettingTab} from "./settings";
+import {DEFAULT_SETTINGS, type MyPluginSettings, SampleSettingTab} from "./settings";
 import {createSqljs} from "./sqljs";
-import { Database } from "sql.js";
+import type { Database, SqlJsStatic } from "sql.js";
 import { ExampleView, VIEW_TYPE_EXAMPLE } from './EditorView';
+import { DatahoarderDbOps } from 'dbOps/DatahoarderDbOps';
+
+
+const readDb = async (app: App, sqljs: SqlJsStatic) => {
+	if (!await app.vault.adapter.exists("./.datahoarder/db.sqlite")) {
+		return new sqljs.Database();
+	}
+
+	const dbData = await app.vault.adapter.readBinary("./.datahoarder/db.sqlite");
+	return new sqljs.Database(new Uint8Array(dbData));
+}
 
 
 export default class DatahoarderPlugin extends Plugin {
@@ -14,15 +25,14 @@ export default class DatahoarderPlugin extends Plugin {
 		await this.loadSettings();
 
 		const sqljs = await createSqljs(this.app, this.manifest);
-
-		const dbData = await this.app.vault.adapter.readBinary("./.datahoarder/db.sqlite");
-
-		const db = new sqljs.Database(new Uint8Array(dbData));
+		const db = await readDb(this.app, sqljs);
 		this.db = db;
+
+		const dbOps = new DatahoarderDbOps(this.app, this.manifest, db);
 
 		this.registerView(
 			VIEW_TYPE_EXAMPLE,
-			(leaf) => new ExampleView(leaf, db),
+			(leaf) => new ExampleView(leaf, dbOps),
 		);
 
 		this.addRibbonIcon('dice', 'Activate view', () => {
@@ -39,21 +49,15 @@ export default class DatahoarderPlugin extends Plugin {
 		statusBarItemEl.setText('Status bar text');
 
 		this.addCommand({
-			id: "create-table",
-			name: "Create table",
-			callback: () => {
-				this.db?.exec("CREATE TABLE IF NOT EXISTS Goals (id BIGINT UNSIGNED PRIMARY KEY, name TEXT)");
-				this.db?.exec("INSERT INTO Goals (id, name) VALUES (1, 'Goal 1')");
-			}
+			id: "set-up-schema",
+			name: "Set up schema",
+			callback: () => dbOps.setUpSchema(),
 		})
 
 		this.addCommand({
 			id: "save-db",
 			name: "Save DB",
-			callback: async () => {
-				const data = db.export();
-				await this.app.vault.adapter.writeBinary("./.datahoarder/db.sqlite", new Uint8Array(data).buffer);
-			},
+			callback: () => dbOps.save(),
 		})
 
 		// This adds a simple command that can be triggered anywhere
