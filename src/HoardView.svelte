@@ -19,7 +19,7 @@ let newTableName = $state("");
 let columnsByTable = $state<Record<number, ReturnType<typeof dbOps.selectColumns>>>({});
 let rowsByTable = $state<Record<number, ReturnType<typeof dbOps.selectRows>>>({});
 
-let cellsByRow = $state<Record<number, Record<number, string>>>({});
+let cellsByRowByTable = $state<Record<number, Record<number, Record<number, string>>>>({});
 
 const refreshTables = () => {
     try {
@@ -38,12 +38,13 @@ const refreshTableInfo = (tableId: number) => {
     rowsByTable[tableId] = dbOps.selectRows(tableId);
     
     const cells = dbOps.selectCells(tableId);
-    const cellsMap: Record<number, Record<number, string>> = {};
+    const cellsByRow: Record<number, Record<number, string>> = {};
     for (const cell of cells) {
-        const row = cellsMap[cell.row_id] ?? {};
+        const row: Record<number, string> = cellsByRow[cell.row_id] ?? {};
         row[cell.column_id] = cell.value;
-        cellsMap[cell.row_id] = row;
+        cellsByRow[cell.row_id] = row;
     }
+    cellsByRowByTable[tableId] = cellsByRow;
 }
 
 onMount(() => {
@@ -84,8 +85,8 @@ const addRow = async (tableId: number) => {
 };
 
 const updateCell = async (rowId: number, columnId: number, value: string) => {
-    if (!cellsByRow[rowId]) cellsByRow[rowId] = {};
-    cellsByRow[rowId][columnId] = value;
+    if (!cellsByRowByTable[rowId]) cellsByRowByTable[rowId] = {};
+    cellsByRowByTable[rowId][columnId] = value;
     
     await dbOps.updateCell(rowId, columnId, value);
     modified = true;
@@ -99,11 +100,20 @@ const save = async () => {
 
 <div class="hoard-editor">
     <div class="controls">
-        <button onclick={save} disabled={!modified}>Save</button>
+        <button
+            onclick={save}
+            disabled={!modified}
+        >
+            Save
+        </button>
     </div>
 
     <div class="create-table">
-        <input type="text" bind:value={newTableName} placeholder="New table name" />
+        <input
+            type="text"
+            bind:value={newTableName}
+            placeholder="New table name"
+        />
         <button onclick={createTable}>Create table</button>
     </div>
 
@@ -113,7 +123,7 @@ const save = async () => {
                 table={table}
                 columns={columnsByTable[table.id] ?? []}
                 rows={rowsByTable[table.id] ?? []}
-                cells={cellsByRow[table.id] ?? {}}
+                cells={cellsByRowByTable[table.id] ?? {}}
                 onAddColumn={addColumn}
                 onAddRow={addRow}
                 onUpdateCell={updateCell}

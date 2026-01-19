@@ -13,15 +13,12 @@ let {
 } = $props();
 </script>
 
-<tr>
-    {#each columns as column}
-        <td>
-            <input 
-                type="text" 
-                value={cells[row.id]?.[column.id] ?? ""} 
-                onchange={(e) => onUpdateCell(row.id, column.id, e.currentTarget.value)} 
-            />
-        </td>
-    {/each}
-    <td></td>
-</tr>
+{#each columns as column}
+    <div class="cell">
+        <input 
+            type="text" 
+            value={cells[row.id]?.[column.id] ?? ""} 
+            onchange={(e) => onUpdateCell(row.id, column.id, e.currentTarget.value)} 
+        />
+    </div>
+{/each}
