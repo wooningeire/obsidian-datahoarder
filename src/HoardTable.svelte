@@ -88,6 +88,11 @@ let activeColumnId = $state<number | null>(null);
 </div>
 
 <style lang="scss">
+.table-view {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 0.25rem;
+}
+
 .table-columns {
     --n-columns: 1;
     
@@ -98,15 +103,10 @@ let activeColumnId = $state<number | null>(null);
     padding: 0.5rem;
 
     overflow-x: auto;
-
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 0.25rem;
 }
 
 .column-header {
     position: relative;
-
-    font-weight: 700;
 }
 
 .column-popover {

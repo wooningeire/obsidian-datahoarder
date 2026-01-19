@@ -1,10 +1,13 @@
 <script lang="ts">
+import type { Column } from "dbOps/DatahoarderDbOps";
+import {store} from "./Store.svelte";
+
 let {
     column,
     onUpdateColumn,
     onClose,
 }: {
-    column: any,
+    column: Column,
     onUpdateColumn: ({
         columnId,
         label,
@@ -35,12 +38,24 @@ let {
         />
 
         <label for="column-datatype">Datatype</label>
-        <input
-            type="text"
-            id="column-datatype"
-            bind:value={column.datatype}
-            onchange={event => onUpdateColumn({ columnId: column.id, datatype: event.currentTarget.value })}
-        />
+        <div>
+            <input
+                type="text"
+                id="column-datatype"
+                bind:value={column.datatype}
+                onchange={event => onUpdateColumn({ columnId: column.id, datatype: event.currentTarget.value })}
+            />
+
+            {#if column.datatype.startsWith("enum:")}
+                {@const enumId = parseInt(column.datatype.slice("enum:".length))}
+
+                {store.enums.get(enumId)?.label ?? "(invalid enum)"}
+            {:else if column.datatype.startsWith("table:")}
+                {@const tableId = parseInt(column.datatype.slice("table:".length))}
+
+                {store.tables.get(tableId)?.label ?? "(invalid table)"}
+            {/if}
+        </div>
     </div>
 </div>
 

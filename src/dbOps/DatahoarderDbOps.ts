@@ -25,7 +25,7 @@ export class DatahoarderDbOps {
 
     private getLastInsertId(): number {
         const results = this.db.exec("SELECT last_insert_rowid()");
-        const id = results[0]?.values[0][0];
+        const id = results[0]?.values[0]?.[0];
         if (typeof id === 'number') return id;
         throw new Error("Failed to retrieve last insert ID");
     }
@@ -62,10 +62,12 @@ export class DatahoarderDbOps {
 
     selectTables() {
         const results = this.db.exec("SELECT id, label FROM Tables")[0]?.values ?? [];
-        return results.map(result => ({
-            id: result[0] as number,
-            label: result[1] as string,
-        }));
+        return new Map(
+            results.map(result => [result[0] as number, {
+                id: result[0] as number,
+                label: result[1] as string,
+            }])
+        );
     }
 
     selectColumns(tableId: number) {
@@ -106,10 +108,12 @@ export class DatahoarderDbOps {
 
     selectEnums() {
         const results = this.db.exec("SELECT id, label FROM Enums")[0]?.values ?? [];
-        return results.map(result => ({
-            id: result[0] as number,
-            label: result[1] as string,
-        }));
+        return new Map(
+            results.map(result => [result[0] as number, {
+                id: result[0] as number,
+                label: result[1] as string,
+            }])
+        );
     }
 
     updateEnumLabel(enumId: number, label: string) {
@@ -133,3 +137,14 @@ export class DatahoarderDbOps {
         this.db.run("UPDATE EnumVariants SET label = ? WHERE id = ?", [label, variantId]);
     }
 }
+
+export type Table = {
+    id: number;
+    label: string;
+};
+
+export type Column = {
+    id: number;
+    label: string;
+    datatype: string;
+};

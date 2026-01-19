@@ -3,9 +3,9 @@ import { onMount } from "svelte";
 import type { DatahoarderDbOps } from "./dbOps/DatahoarderDbOps";
 
 import { Notice } from "obsidian";
-	import { error } from "console";
-	import HoardTable from "HoardTable.svelte";
+import HoardTable from "HoardTable.svelte";
 import HoardEnum from "HoardEnum.svelte";
+import { store } from "Store.svelte";
 
 let {
     dbOps,
@@ -14,7 +14,8 @@ let {
 } = $props();
 
 let modified = $state(false);
-let tables = $state<ReturnType<typeof dbOps.selectTables>>([]);
+
+
 let newTableName = $state("");
 
 let columnsByTable = $state<Record<number, ReturnType<typeof dbOps.selectColumns>>>({});
@@ -22,14 +23,13 @@ let rowsByTable = $state<Record<number, ReturnType<typeof dbOps.selectRows>>>({}
 
 let cellsByRowByTable = $state<Record<number, Record<number, Record<number, string>>>>({});
 
-let enums = $state<ReturnType<typeof dbOps.selectEnums>>([]);
 let newEnumName = $state("");
 let variantsByEnum = $state<Record<number, ReturnType<typeof dbOps.selectEnumVariants>>>({});
 
 const refreshTables = () => {
     try {
-        tables = dbOps.selectTables();
-        for (const table of tables) {
+        store.tables = dbOps.selectTables();
+        for (const table of store.tables.values()) {
             refreshTableInfo(table.id);
         }
     } catch (error) {
@@ -54,8 +54,8 @@ const refreshTableInfo = (tableId: number) => {
 
 const refreshEnums = () => {
     try {
-        enums = dbOps.selectEnums();
-        for (const enumItem of enums) {
+        store.enums = dbOps.selectEnums();
+        for (const enumItem of store.enums.values()) {
             variantsByEnum[enumItem.id] = dbOps.selectEnumVariants(enumItem.id);
         }
     } catch (error) {
@@ -192,7 +192,7 @@ const updateEnumVariant = (variantId: number, label: string) => {
     </div>
 
     <div class="enums-list">
-        {#each enums as enumItem}
+        {#each store.enums.values() as enumItem}
             <HoardEnum
                 enumData={enumItem}
                 variants={variantsByEnum[enumItem.id] ?? []}
@@ -214,7 +214,7 @@ const updateEnumVariant = (variantId: number, label: string) => {
     </div>
 
     <div class="tables-list">
-        {#each tables as table}
+        {#each store.tables.values() as table}
             <HoardTable
                 table={table}
                 columns={columnsByTable[table.id] ?? []}
