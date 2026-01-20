@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS Columns(
     table_id INTEGER REFERENCES Tables(id) ON DELETE CASCADE,
     label TEXT,
     datatype TEXT,
+    default_sort_order INTEGER,
+    default_value TEXT,
     created_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );

@@ -49,7 +49,16 @@ export class DatahoarderDbOps {
     }
 
     addColumn(tableId: number, label: string, datatype: string) {
-        this.db.run("INSERT INTO Columns (table_id, label, datatype) VALUES (?, ?, ?)", [tableId, label, datatype]);
+        const maxOrderResult = this.db.exec(
+            "SELECT COALESCE(MAX(default_sort_order), -1) + 1 FROM Columns WHERE table_id = ?",
+            [tableId]
+        );
+        const nextOrder = (maxOrderResult[0]?.values[0]?.[0] as number) ?? 0;
+        
+        this.db.run(
+            "INSERT INTO Columns (table_id, label, datatype, default_sort_order) VALUES (?, ?, ?, ?)",
+            [tableId, label, datatype, nextOrder]
+        );
         return this.getLastInsertId();
     }
 
@@ -59,6 +68,15 @@ export class DatahoarderDbOps {
 
     updateColumnDatatype(columnId: number, datatype: string) {
         this.db.run("UPDATE Columns SET datatype = ? WHERE id = ?", [datatype, columnId]);
+    }
+
+    reorderColumns(columnIds: number[]) {
+        for (let i = 0; i < columnIds.length; i++) {
+            const columnId = columnIds[i];
+            if (columnId !== undefined) {
+                this.db.run("UPDATE Columns SET default_sort_order = ? WHERE id = ?", [i, columnId]);
+            }
+        }
     }
 
     addRow(tableId: number) {
@@ -84,7 +102,10 @@ export class DatahoarderDbOps {
     }
 
     selectColumns(tableId: number) {
-        const results = this.db.exec("SELECT id, label, datatype FROM Columns WHERE table_id = ?", [tableId])[0]?.values ?? [];
+        const results = this.db.exec(
+            "SELECT id, label, datatype FROM Columns WHERE table_id = ? ORDER BY default_sort_order ASC, id ASC",
+            [tableId]
+        )[0]?.values ?? [];
         return results.map(result => ({
             id: result[0] as number,
             label: result[1] as string,

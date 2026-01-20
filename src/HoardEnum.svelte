@@ -77,11 +77,6 @@ let editingEnum = $state(false);
     gap: 0.25rem;
 }
 
-.variant-item input {
-    width: 100%;
-    box-sizing: border-box;
-}
-
 h3 {
     margin: 0 0 0.5rem 0;
 }

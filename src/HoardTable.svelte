@@ -14,6 +14,7 @@ let {
     onUpdateTable,
     onAddRow,
     onUpdateCell,
+    onReorderColumns,
 }: {
     table: any,
     columns: any[],
@@ -24,10 +25,65 @@ let {
     onUpdateTable: ({ tableId, label }: { tableId: number, label?: string }) => void,
     onAddRow: (tableId: number) => void,
     onUpdateCell: (rowId: number, columnId: number, value: string) => void,
+    onReorderColumns: (tableId: number, columnIds: number[]) => void,
 } = $props();
 
 let activeColumnId = $state<number | null>(null);
 let editingTable = $state(false);
+
+
+
+let draggedColumnId = $state<number | null>(null);
+let dropTargetIndex = $state<number | null>(null);
+
+const handleDragStart = (event: DragEvent, columnId: number) => {
+    draggedColumnId = columnId;
+    if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', columnId.toString());
+    }
+};
+
+const handleDragOver = (event: DragEvent, index: number) => {
+    event.preventDefault();
+    if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'move';
+    }
+    dropTargetIndex = index;
+}
+
+const handleDragLeave = () => {
+    dropTargetIndex = null;
+}
+
+const handleDrop = (event: DragEvent, targetIndex: number) => {
+    event.preventDefault();
+    
+    if (draggedColumnId === null) return;
+    
+    const draggedIndex = columns.findIndex(column => column.id === draggedColumnId);
+    if (draggedIndex === -1 || draggedIndex === targetIndex) {
+        resetDragState();
+        return;
+    }
+    
+    const newColumns = [...columns];
+    const [draggedColumn] = newColumns.splice(draggedIndex, 1);
+    newColumns.splice(targetIndex, 0, draggedColumn);
+    
+    onReorderColumns(table.id, newColumns.map(column => column.id));
+    
+    resetDragState();
+};
+
+const handleDragEnd = () => {
+    resetDragState();
+};
+
+const resetDragState = () => {
+    draggedColumnId = null;
+    dropTargetIndex = null;
+};
 </script>
 
 
@@ -59,8 +115,20 @@ let editingTable = $state(false);
         class="table-columns"
         style:--n-columns={columns.length}
     >
-        {#each columns as column}
-            <div class="column-header">
+        {#each columns as column, columnIndex}
+            <div
+                class="column-header"
+                class:dragging={draggedColumnId === column.id}
+                class:drop-target={dropTargetIndex === columnIndex && draggedColumnId !== column.id}
+                draggable="true"
+                role="button"
+                tabindex="0"
+                ondragstart={event => handleDragStart(event, column.id)}
+                ondragover={event => handleDragOver(event, columnIndex)}
+                ondragleave={handleDragLeave}
+                ondrop={event => handleDrop(event, columnIndex)}
+                ondragend={handleDragEnd}
+            >
                 <button
                     class="column-label"
                     onclick={() => {
@@ -132,6 +200,23 @@ let editingTable = $state(false);
 
 .column-header {
     position: relative;
+
+    cursor: grab;
+    user-select: none;
+
+    transition: opacity 0.15s ease, background-color 0.15s ease;
+    
+    &:active {
+        cursor: grabbing;
+    }
+    
+    &.dragging {
+        opacity: 0.5;
+    }
+    
+    &.drop-target {
+        box-shadow: inset 3px 0 0 var(--interactive-accent);
+    }
 }
 
 h3 {

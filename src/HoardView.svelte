@@ -121,6 +121,12 @@ const updateColumn = ({
     modified = true;
 };
 
+const reorderColumns = (tableId: number, columnIds: number[]) => {
+    dbOps.reorderColumns(columnIds);
+    refreshTableInfo(tableId);
+    modified = true;
+};
+
 const updateTable = ({
     tableId,
     label,
@@ -257,6 +263,7 @@ const updateEnum = ({
                 onUpdateTable={updateTable}
                 onAddRow={addRow}
                 onUpdateCell={updateCell}
+                onReorderColumns={reorderColumns}
             />
         {/each}
     </div>
