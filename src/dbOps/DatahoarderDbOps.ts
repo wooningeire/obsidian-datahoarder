@@ -18,6 +18,15 @@ export class DatahoarderDbOps {
         }
     }
 
+    async migrate() {
+        try {
+            this.db.exec(await this.app.vault.adapter.read(`./${this.manifest.dir}/src/dbOps/migrate.sql`));
+            new Notice("Migration successful");
+        } catch (e) {
+            new Notice("Failed to migrate: " + e);
+        }
+    }
+
     async save() {
         const data = this.db.export();
         await this.app.vault.adapter.writeBinary("./.datahoarder/db.sqlite", new Uint8Array(data).buffer);

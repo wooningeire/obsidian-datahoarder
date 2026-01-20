@@ -1,0 +1,1 @@
+ALTER TABLE EnumVariants ADD COLUMN color TEXT;

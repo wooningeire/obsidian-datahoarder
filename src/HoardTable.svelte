@@ -89,6 +89,9 @@ let activeColumnId = $state<number | null>(null);
 
 <style lang="scss">
 .table-view {
+    display: flex;
+    flex-direction: column;
+
     border: 1px solid var(--background-modifier-border);
     border-radius: 0.25rem;
 }
@@ -97,7 +100,7 @@ let activeColumnId = $state<number | null>(null);
     --n-columns: 1;
     
     display: grid;
-    max-width: 100%;
+    width: 100%;
     grid-template-columns: repeat(calc(var(--n-columns) + 1), auto);
     margin-top: 1rem;
     padding: 0.5rem;

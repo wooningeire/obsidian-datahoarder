@@ -54,6 +54,12 @@ export default class DatahoarderPlugin extends Plugin {
 			callback: () => dbOps.setUpSchema(),
 		})
 
+		this.addCommand({
+			id: "migrate",
+			name: "Migrate",
+			callback: () => dbOps.migrate(),
+		})
+
 		// This adds a simple command that can be triggered anywhere
 
 		// this.addCommand({

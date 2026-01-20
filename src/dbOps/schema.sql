@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS EnumVariants(
     id INTEGER PRIMARY KEY,
     enum_id INTEGER REFERENCES Enums(id) ON DELETE CASCADE,
     label TEXT,
+    color TEXT,
     created_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
