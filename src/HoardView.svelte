@@ -200,6 +200,12 @@ const updateEnum = ({
     refreshEnums();
     modified = true;
 };
+
+const reorderEnumVariants = (enumId: number, variantIds: number[]) => {
+    dbOps.reorderEnumVariants(variantIds);
+    store.enumVariantsByEnumId.set(enumId, dbOps.selectEnumVariants(enumId));
+    modified = true;
+};
 </script>
 
 
@@ -236,6 +242,7 @@ const updateEnum = ({
                 onAddVariant={addEnumVariant}
                 onUpdateVariant={updateEnumVariant}
                 onUpdateEnum={updateEnum}
+                onReorderVariants={reorderEnumVariants}
             />
         {/each}
     </div>

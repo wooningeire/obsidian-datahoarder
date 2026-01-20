@@ -155,16 +155,37 @@ export class DatahoarderDbOps {
     }
 
     addEnumVariant(enumId: number, label: string) {
-        this.db.run("INSERT INTO EnumVariants (enum_id, label) VALUES (?, ?)", [enumId, label]);
+        const maxOrderResult = this.db.exec(
+            "SELECT COALESCE(MAX(default_sort_order), -1) + 1 FROM EnumVariants WHERE enum_id = ?",
+            [enumId]
+        );
+        const nextOrder = (maxOrderResult[0]?.values[0]?.[0] as number) ?? 0;
+        
+        this.db.run(
+            "INSERT INTO EnumVariants (enum_id, label, default_sort_order) VALUES (?, ?, ?)",
+            [enumId, label, nextOrder]
+        );
         return this.getLastInsertId();
     }
 
     selectEnumVariants(enumId: number) {
-        const results = this.db.exec("SELECT id, label FROM EnumVariants WHERE enum_id = ?", [enumId])[0]?.values ?? [];
+        const results = this.db.exec(
+            "SELECT id, label FROM EnumVariants WHERE enum_id = ? ORDER BY default_sort_order ASC, id ASC",
+            [enumId]
+        )[0]?.values ?? [];
         return results.map(result => ({
             id: result[0] as number,
             label: result[1] as string,
         }));
+    }
+
+    reorderEnumVariants(variantIds: number[]) {
+        for (let i = 0; i < variantIds.length; i++) {
+            const variantId = variantIds[i];
+            if (variantId !== undefined) {
+                this.db.run("UPDATE EnumVariants SET default_sort_order = ? WHERE id = ?", [i, variantId]);
+            }
+        }
     }
 
     updateEnumVariantLabel(variantId: number, label: string) {
