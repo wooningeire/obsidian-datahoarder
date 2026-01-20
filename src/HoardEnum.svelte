@@ -1,19 +1,41 @@
 <script lang="ts">
+import EnumSettingsMenu from "EnumSettingsMenu.svelte";
+import Popover from "Popover.svelte";
+
 let {
     enumData,
     variants,
     onAddVariant,
     onUpdateVariant,
+    onUpdateEnum,
 }: {
     enumData: { id: number; label: string },
     variants: { id: number; label: string }[],
     onAddVariant: (enumId: number, label: string) => number,
     onUpdateVariant: (variantId: number, label: string) => void,
+    onUpdateEnum: ({ enumId, label }: { enumId: number, label?: string }) => void,
 } = $props();
+
+let editingEnum = $state(false);
 </script>
 
 <div class="enum-view">
-    <h3>{enumData.label}</h3>
+    <div class="enum-header">
+        <button
+            class="enum-title"
+            onclick={() => editingEnum = !editingEnum}
+        >
+            <h3>{enumData.label}</h3>
+        </button>
+        
+        <Popover active={editingEnum}>
+            <EnumSettingsMenu
+                enumData={enumData}
+                {onUpdateEnum}
+                onClose={() => editingEnum = false}
+            />
+        </Popover>
+    </div>
 
     <div class="enum-stats">
         {variants.length} variants
@@ -40,6 +62,10 @@ let {
     
     border: 1px solid var(--background-modifier-border);
     border-radius: 0.25rem;
+}
+
+.enum-header {
+    position: relative;
 }
 
 .variants-list {

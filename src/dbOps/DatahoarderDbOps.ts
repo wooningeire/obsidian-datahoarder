@@ -44,6 +44,10 @@ export class DatahoarderDbOps {
         return this.getLastInsertId();
     }
 
+    updateTableLabel(tableId: number, label: string) {
+        this.db.run("UPDATE Tables SET label = ? WHERE id = ?", [label, tableId]);
+    }
+
     addColumn(tableId: number, label: string, datatype: string) {
         this.db.run("INSERT INTO Columns (table_id, label, datatype) VALUES (?, ?, ?)", [tableId, label, datatype]);
         return this.getLastInsertId();

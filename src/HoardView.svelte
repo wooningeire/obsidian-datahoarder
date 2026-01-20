@@ -121,6 +121,20 @@ const updateColumn = ({
     modified = true;
 };
 
+const updateTable = ({
+    tableId,
+    label,
+}: {
+    tableId: number,
+    label?: string,
+}) => {
+    if (label) {
+        dbOps.updateTableLabel(tableId, label);
+    }
+    refreshTables();
+    modified = true;
+};
+
 const addRow = (tableId: number) => {
     dbOps.addRow(tableId);
     refreshTableInfo(tableId);
@@ -166,6 +180,20 @@ const updateEnumVariant = (variantId: number, label: string) => {
     refreshEnums();
     modified = true;
 };
+
+const updateEnum = ({
+    enumId,
+    label,
+}: {
+    enumId: number,
+    label?: string,
+}) => {
+    if (label) {
+        dbOps.updateEnumLabel(enumId, label);
+    }
+    refreshEnums();
+    modified = true;
+};
 </script>
 
 
@@ -201,6 +229,7 @@ const updateEnumVariant = (variantId: number, label: string) => {
                 variants={store.enumVariantsByEnumId.get(enumItem.id) ?? []}
                 onAddVariant={addEnumVariant}
                 onUpdateVariant={updateEnumVariant}
+                onUpdateEnum={updateEnum}
             />
         {/each}
     </div>
@@ -225,6 +254,7 @@ const updateEnumVariant = (variantId: number, label: string) => {
                 cells={cellsByRowByTable[table.id] ?? {}}
                 onAddColumn={addColumn}
                 onUpdateColumn={updateColumn}
+                onUpdateTable={updateTable}
                 onAddRow={addRow}
                 onUpdateCell={updateCell}
             />
