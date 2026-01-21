@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS Columns(
     label TEXT,
     datatype TEXT,
     default_sort_order INTEGER,
-    default_value TEXT,
     created_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -43,7 +42,8 @@ CREATE TABLE IF NOT EXISTS EnumVariants(
     id INTEGER PRIMARY KEY,
     enum_id INTEGER REFERENCES Enums(id) ON DELETE CASCADE,
     label TEXT,
-    color TEXT,
+    color_driver_id INTEGER REFERENCES Drivers(id) ON DELETE SET NULL,
+    default_sort_order INTEGER,
     created_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -56,3 +56,9 @@ CREATE TABLE IF NOT EXISTS EnumVariants(
 --     created_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
 --     updated_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 -- );
+
+CREATE TABLE IF NOT EXISTS Driver(
+    id INTEGER PRIMARY KEY,
+    label TEXT,
+    expression TEXT
+);

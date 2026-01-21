@@ -5,6 +5,7 @@ import {store} from "./Store.svelte";
 let {
     column,
     onUpdateColumn,
+    onDeleteColumn,
     onClose,
 }: {
     column: Column,
@@ -17,6 +18,7 @@ let {
         label?: string,
         datatype?: string,
     }) => void,
+    onDeleteColumn: (columnId: number) => void,
     onClose: () => void,
 } = $props();
 </script>
@@ -57,6 +59,10 @@ let {
             {/if}
         </div>
     </div>
+
+    <button class="delete-btn" onclick={() => { onDeleteColumn(column.id); onClose(); }}>
+        Delete column
+    </button>
 </div>
 
 <style lang="scss">

@@ -191,6 +191,28 @@ export class DatahoarderDbOps {
     updateEnumVariantLabel(variantId: number, label: string) {
         this.db.run("UPDATE EnumVariants SET label = ? WHERE id = ?", [label, variantId]);
     }
+
+    // --- Delete Operations ---
+
+    deleteTable(tableId: number) {
+        this.db.run("DELETE FROM Tables WHERE id = ?", [tableId]);
+    }
+
+    deleteColumn(columnId: number) {
+        this.db.run("DELETE FROM Columns WHERE id = ?", [columnId]);
+    }
+
+    deleteRow(rowId: number) {
+        this.db.run("DELETE FROM Rows WHERE id = ?", [rowId]);
+    }
+
+    deleteEnum(enumId: number) {
+        this.db.run("DELETE FROM Enums WHERE id = ?", [enumId]);
+    }
+
+    deleteEnumVariant(variantId: number) {
+        this.db.run("DELETE FROM EnumVariants WHERE id = ?", [variantId]);
+    }
 }
 
 export type Table = {

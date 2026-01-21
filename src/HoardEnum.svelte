@@ -1,5 +1,6 @@
 <script lang="ts">
 import EnumSettingsMenu from "EnumSettingsMenu.svelte";
+import EnumVariantSettingsMenu from "EnumVariantSettingsMenu.svelte";
 import Popover from "Popover.svelte";
 
 let {
@@ -8,6 +9,8 @@ let {
     onAddVariant,
     onUpdateVariant,
     onUpdateEnum,
+    onDeleteEnum,
+    onDeleteVariant,
     onReorderVariants,
 }: {
     enumData: { id: number; label: string },
@@ -15,10 +18,13 @@ let {
     onAddVariant: (enumId: number, label: string) => number,
     onUpdateVariant: (variantId: number, label: string) => void,
     onUpdateEnum: ({ enumId, label }: { enumId: number, label?: string }) => void,
+    onDeleteEnum: (enumId: number) => void,
+    onDeleteVariant: (variantId: number) => void,
     onReorderVariants: (enumId: number, variantIds: number[]) => void,
 } = $props();
 
 let editingEnum = $state(false);
+let activeVariantId = $state<number | null>(null);
 
 
 let draggedVariantId = $state<number | null>(null);
@@ -91,6 +97,7 @@ const resetDragState = () => {
             <EnumSettingsMenu
                 enumData={enumData}
                 {onUpdateEnum}
+                {onDeleteEnum}
                 onClose={() => editingEnum = false}
             />
         </Popover>
@@ -114,6 +121,24 @@ const resetDragState = () => {
                 ondrop={event => handleDrop(event, variantIndex)}
                 ondragend={handleDragEnd}
             >
+                <div class="variant-settings-wrapper">
+                    <button onclick={() => {
+                        if (activeVariantId === variant.id) {
+                            activeVariantId = null;
+                        } else {
+                            activeVariantId = variant.id;
+                        }
+                    }}>⠿</button>
+                    
+                    <Popover active={activeVariantId === variant.id}>
+                        <EnumVariantSettingsMenu
+                            {variant}
+                            {onDeleteVariant}
+                            onClose={() => activeVariantId = null}
+                        />
+                    </Popover>
+                </div>
+
                 <input
                     type="text"
                     value={variant.label}
@@ -158,12 +183,16 @@ const resetDragState = () => {
     }
     
     &.dragging {
-        opacity: 0.5;
+        opacity: 0.25;
     }
     
     &.drop-target {
         box-shadow: inset 0 3px 0 var(--interactive-accent);
     }
+}
+
+.variant-settings-wrapper {
+    position: relative;
 }
 
 h3 {

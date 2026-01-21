@@ -206,6 +206,38 @@ const reorderEnumVariants = (enumId: number, variantIds: number[]) => {
     store.enumVariantsByEnumId.set(enumId, dbOps.selectEnumVariants(enumId));
     modified = true;
 };
+
+// --- Delete Operations ---
+
+const deleteTable = (tableId: number) => {
+    dbOps.deleteTable(tableId);
+    refreshTables();
+    modified = true;
+};
+
+const deleteColumn = (columnId: number, tableId: number) => {
+    dbOps.deleteColumn(columnId);
+    refreshTableInfo(tableId);
+    modified = true;
+};
+
+const deleteRow = (rowId: number, tableId: number) => {
+    dbOps.deleteRow(rowId);
+    refreshTableInfo(tableId);
+    modified = true;
+};
+
+const deleteEnum = (enumId: number) => {
+    dbOps.deleteEnum(enumId);
+    refreshEnums();
+    modified = true;
+};
+
+const deleteEnumVariant = (variantId: number, enumId: number) => {
+    dbOps.deleteEnumVariant(variantId);
+    store.enumVariantsByEnumId.set(enumId, dbOps.selectEnumVariants(enumId));
+    modified = true;
+};
 </script>
 
 
@@ -242,6 +274,8 @@ const reorderEnumVariants = (enumId: number, variantIds: number[]) => {
                 onAddVariant={addEnumVariant}
                 onUpdateVariant={updateEnumVariant}
                 onUpdateEnum={updateEnum}
+                onDeleteEnum={deleteEnum}
+                onDeleteVariant={(variantId) => deleteEnumVariant(variantId, enumItem.id)}
                 onReorderVariants={reorderEnumVariants}
             />
         {/each}
@@ -267,8 +301,11 @@ const reorderEnumVariants = (enumId: number, variantIds: number[]) => {
                 cells={cellsByRowByTable[table.id] ?? {}}
                 onAddColumn={addColumn}
                 onUpdateColumn={updateColumn}
+                onDeleteColumn={(columnId) => deleteColumn(columnId, table.id)}
                 onUpdateTable={updateTable}
+                onDeleteTable={deleteTable}
                 onAddRow={addRow}
+                onDeleteRow={(rowId) => deleteRow(rowId, table.id)}
                 onUpdateCell={updateCell}
                 onReorderColumns={reorderColumns}
             />

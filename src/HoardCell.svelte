@@ -37,7 +37,7 @@ let {
     >
         <option value=""></option>
         {#each variants as variant}
-            <option value="enumvariant:{variant.id}">{variant.label}</option>
+            <option value={variant.id.toString()}>{variant.label}</option>
         {/each}
     </select>
 {:else}

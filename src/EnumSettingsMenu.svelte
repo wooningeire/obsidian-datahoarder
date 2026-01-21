@@ -2,6 +2,7 @@
 let {
     enumData,
     onUpdateEnum,
+    onDeleteEnum,
     onClose,
 }: {
     enumData: { id: number; label: string },
@@ -12,6 +13,7 @@ let {
         enumId: number,
         label?: string,
     }) => void,
+    onDeleteEnum: (enumId: number) => void,
     onClose: () => void,
 } = $props();
 </script>
@@ -28,6 +30,10 @@ let {
             onchange={event => onUpdateEnum({ enumId: enumData.id, label: event.currentTarget.value })}
         />
     </div>
+
+    <button class="delete-btn" onclick={() => { onDeleteEnum(enumData.id); onClose(); }}>
+        Delete enum
+    </button>
 </div>
 
 <style lang="scss">

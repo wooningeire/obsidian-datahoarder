@@ -4,6 +4,7 @@ import type { Table } from "dbOps/DatahoarderDbOps";
 let {
     table,
     onUpdateTable,
+    onDeleteTable,
     onClose,
 }: {
     table: Table,
@@ -14,6 +15,7 @@ let {
         tableId: number,
         label?: string,
     }) => void,
+    onDeleteTable: (tableId: number) => void,
     onClose: () => void,
 } = $props();
 </script>
@@ -30,6 +32,10 @@ let {
             onchange={event => onUpdateTable({ tableId: table.id, label: event.currentTarget.value })}
         />
     </div>
+
+    <button class="delete-btn" onclick={() => { onDeleteTable(table.id); onClose(); }}>
+        Delete table
+    </button>
 </div>
 
 <style lang="scss">

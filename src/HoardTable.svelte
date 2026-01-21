@@ -11,8 +11,11 @@ let {
     cells,
     onAddColumn,
     onUpdateColumn,
+    onDeleteColumn,
     onUpdateTable,
+    onDeleteTable,
     onAddRow,
+    onDeleteRow,
     onUpdateCell,
     onReorderColumns,
 }: {
@@ -22,8 +25,11 @@ let {
     cells: any,
     onAddColumn: ({ tableId, label, datatype }: { tableId: number, label: string, datatype: string }) => number,
     onUpdateColumn: ({ columnId, label, datatype }: { columnId: number, label?: string, datatype?: string }) => void,
+    onDeleteColumn: (columnId: number) => void,
     onUpdateTable: ({ tableId, label }: { tableId: number, label?: string }) => void,
+    onDeleteTable: (tableId: number) => void,
     onAddRow: (tableId: number) => void,
+    onDeleteRow: (rowId: number) => void,
     onUpdateCell: (rowId: number, columnId: number, value: string) => void,
     onReorderColumns: (tableId: number, columnIds: number[]) => void,
 } = $props();
@@ -100,6 +106,7 @@ const resetDragState = () => {
             <TableSettingsMenu
                 table={table}
                 {onUpdateTable}
+                {onDeleteTable}
                 onClose={() => editingTable = false}
             />
         </Popover>
@@ -115,6 +122,8 @@ const resetDragState = () => {
         class="table-columns"
         style:--n-columns={columns.length}
     >
+        <div></div>
+
         {#each columns as column, columnIndex}
             <div
                 class="column-header"
@@ -146,6 +155,7 @@ const resetDragState = () => {
                     <ColumnSettingsMenu
                         column={column}
                         {onUpdateColumn}
+                        {onDeleteColumn}
                         onClose={() => activeColumnId = null}
                     />
                 </Popover>
@@ -164,6 +174,7 @@ const resetDragState = () => {
                 columns={columns}
                 cells={cells}
                 onUpdateCell={onUpdateCell}
+                {onDeleteRow}
             />
 
             <div></div>
@@ -191,7 +202,7 @@ const resetDragState = () => {
     
     display: grid;
     width: 100%;
-    grid-template-columns: repeat(calc(var(--n-columns) + 1), auto);
+    grid-template-columns: repeat(calc(var(--n-columns) + 2), auto);
     margin-top: 1rem;
     padding: 0.5rem;
 
@@ -211,11 +222,19 @@ const resetDragState = () => {
     }
     
     &.dragging {
-        opacity: 0.5;
+        opacity: 0.25;
     }
     
-    &.drop-target {
-        box-shadow: inset 3px 0 0 var(--interactive-accent);
+    &.drop-target::before {
+        content: "";
+
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 0.25rem;
+        height: 100%;
+
+        background: var(--interactive-accent);
     }
 }
 

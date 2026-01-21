@@ -1,2 +1,2 @@
-ALTER TABLE EnumVariants ADD COLUMN default_sort_order INTEGER;
-ALTER TABLE Columns DROP COLUMN default_value;
+ALTER TABLE EnumVariants DROP COLUMN color;
+ALTER TABLE EnumVariants ADD COLUMN color_driver_id INTEGER REFERENCES Drivers(id) ON DELETE SET NULL;
