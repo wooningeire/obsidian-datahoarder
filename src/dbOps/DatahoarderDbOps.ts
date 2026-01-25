@@ -11,7 +11,7 @@ export class DatahoarderDbOps {
 
     async setUpSchema() {
         try {
-            this.db.exec(await this.app.vault.adapter.read(`./${this.manifest.dir}/src/dbOps/schema.sql`));
+            this.db.exec(await this.app.vault.adapter.read(`./${this.manifest.dir}/src/lib/schema.sql`));
             new Notice("Schema set up successfully");
         } catch (e) {
             new Notice("Failed to set up schema: " + e);
@@ -20,7 +20,7 @@ export class DatahoarderDbOps {
 
     async migrate() {
         try {
-            this.db.exec(await this.app.vault.adapter.read(`./${this.manifest.dir}/src/dbOps/migrate.sql`));
+            this.db.exec(await this.app.vault.adapter.read(`./${this.manifest.dir}/src/lib/migrate.sql`));
             new Notice("Migration successful");
         } catch (e) {
             new Notice("Failed to migrate: " + e);
