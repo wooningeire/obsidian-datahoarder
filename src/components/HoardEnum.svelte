@@ -1,8 +1,8 @@
 <script lang="ts">
-import EnumSettingsMenu from "EnumSettingsMenu.svelte";
-import EnumVariantSettingsMenu from "EnumVariantSettingsMenu.svelte";
-import Popover from "Popover.svelte";
-import { store } from "Store.svelte";
+import EnumSettingsMenu from "./EnumSettingsMenu.svelte";
+import EnumVariantSettingsMenu from "./EnumVariantSettingsMenu.svelte";
+import Popover from "./Popover.svelte";
+import { store } from "./Store.svelte";
 
 let {
     enumData,
@@ -94,9 +94,9 @@ const resetDragState = () => {
         {variants.length} variants
     </div>
 
-    <ul class="variants-list">
+    <div class="variants-list">
         {#each variants as variant, variantIndex}
-            <li
+            <div
                 class="variant-item"
                 class:dragging={draggedVariantId === variant.id}
                 class:drop-target={dropTargetIndex === variantIndex && draggedVariantId !== variant.id}
@@ -131,9 +131,9 @@ const resetDragState = () => {
                     value={variant.label}
                     onchange={(e) => store.updateEnumVariant(variant.id, e.currentTarget.value)}
                 />
-            </li>
+            </div>
         {/each}
-    </ul>
+    </div>
 
     <button onclick={() => store.addEnumVariant(enumData.id, "")}>Add variant</button>
 </div>
@@ -151,15 +151,14 @@ const resetDragState = () => {
 }
 
 .variants-list {
-    list-style: none;
-    padding: 0;
-    margin: 0.5rem 0;
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
 }
 
 .variant-item {
+    display: flex;
+
     cursor: grab;
     user-select: none;
 

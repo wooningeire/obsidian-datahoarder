@@ -1,9 +1,9 @@
 <script lang="ts">
-import HoardRow from "HoardRow.svelte";
-import ColumnSettingsMenu from "ColumnSettingsMenu.svelte";
-import TableSettingsMenu from "TableSettingsMenu.svelte";
-import Popover from "Popover.svelte";
-import { store } from "Store.svelte";
+import HoardRow from "./HoardRow.svelte";
+import ColumnSettingsMenu from "./ColumnSettingsMenu.svelte";
+import TableSettingsMenu from "./TableSettingsMenu.svelte";
+import Popover from "./Popover.svelte";
+import { store } from "./Store.svelte";
 
 let {
     table,

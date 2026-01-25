@@ -2,9 +2,9 @@
 import { onMount } from "svelte";
 import type { DatahoarderDbOps } from "./dbOps/DatahoarderDbOps";
 
-import HoardTable from "HoardTable.svelte";
-import HoardEnum from "HoardEnum.svelte";
-import { store } from "Store.svelte";
+import HoardTable from "./HoardTable.svelte";
+import HoardEnum from "./HoardEnum.svelte";
+import { store } from "./Store.svelte";
 
 let {
     dbOps,

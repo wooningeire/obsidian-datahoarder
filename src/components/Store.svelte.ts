@@ -1,5 +1,5 @@
 import { SvelteMap } from "svelte/reactivity";
-import type { DatahoarderDbOps, Table, Column } from "./dbOps/DatahoarderDbOps";
+import type { DatahoarderDbOps, Table, Column } from "../dbOps/DatahoarderDbOps";
 import { Notice } from "obsidian";
 
 let tables = $state<Map<number, Table>>(new SvelteMap());

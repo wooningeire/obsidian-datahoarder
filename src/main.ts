@@ -2,7 +2,7 @@ import {App, Editor, MarkdownView, Modal, Notice, Plugin, WorkspaceLeaf} from 'o
 import {DEFAULT_SETTINGS, type MyPluginSettings, SampleSettingTab} from "./settings";
 import {createSqljs} from "./sqljs";
 import type { Database, SqlJsStatic } from "sql.js";
-import { ExampleView, VIEW_TYPE_EXAMPLE } from './EditorView';
+import { ExampleView, VIEW_TYPE_EXAMPLE } from './HoardView';
 import { DatahoarderDbOps } from 'dbOps/DatahoarderDbOps';
 
 

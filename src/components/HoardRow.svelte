@@ -1,7 +1,7 @@
 <script lang="ts">
-import HoardCell from "HoardCell.svelte";
-import RowSettingsMenu from "RowSettingsMenu.svelte";
-import Popover from "Popover.svelte";
+import HoardCell from "./HoardCell.svelte";
+import RowSettingsMenu from "./RowSettingsMenu.svelte";
+import Popover from "./Popover.svelte";
 
 let {
     row,

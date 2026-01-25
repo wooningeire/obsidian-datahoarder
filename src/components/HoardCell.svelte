@@ -1,5 +1,5 @@
 <script lang="ts">
-import { store } from "Store.svelte";
+import { store } from "./Store.svelte";
 
 let {
     row,
