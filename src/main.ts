@@ -2,7 +2,7 @@ import {App, Editor, MarkdownView, Modal, Notice, Plugin, WorkspaceLeaf} from 'o
 import {DEFAULT_SETTINGS, type MyPluginSettings, SampleSettingTab} from "./settings";
 import {createSqljs} from "./sqljs";
 import type { Database, SqlJsStatic } from "sql.js";
-import { ExampleView, VIEW_TYPE_EXAMPLE } from './HoardView';
+import { HoardEditorView, VIEW_TYPE_EXAMPLE } from './HoardEditorView';
 import { DatahoarderDbOps } from 'dbOps/DatahoarderDbOps';
 
 
@@ -32,7 +32,7 @@ export default class DatahoarderPlugin extends Plugin {
 
 		this.registerView(
 			VIEW_TYPE_EXAMPLE,
-			(leaf) => new ExampleView(leaf, dbOps),
+			(leaf) => new HoardEditorView(leaf, dbOps),
 		);
 
 		this.addRibbonIcon('dice', 'Activate view', () => {

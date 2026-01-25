@@ -192,8 +192,6 @@ export class DatahoarderDbOps {
         this.db.run("UPDATE EnumVariants SET label = ? WHERE id = ?", [label, variantId]);
     }
 
-    // --- Delete Operations ---
-
     deleteTable(tableId: number) {
         this.db.run("DELETE FROM Tables WHERE id = ?", [tableId]);
     }
