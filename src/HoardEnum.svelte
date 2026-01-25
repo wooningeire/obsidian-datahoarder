@@ -2,26 +2,15 @@
 import EnumSettingsMenu from "EnumSettingsMenu.svelte";
 import EnumVariantSettingsMenu from "EnumVariantSettingsMenu.svelte";
 import Popover from "Popover.svelte";
+import { store } from "Store.svelte";
 
 let {
     enumData,
-    variants,
-    onAddVariant,
-    onUpdateVariant,
-    onUpdateEnum,
-    onDeleteEnum,
-    onDeleteVariant,
-    onReorderVariants,
 }: {
     enumData: { id: number; label: string },
-    variants: { id: number; label: string }[],
-    onAddVariant: (enumId: number, label: string) => number,
-    onUpdateVariant: (variantId: number, label: string) => void,
-    onUpdateEnum: ({ enumId, label }: { enumId: number, label?: string }) => void,
-    onDeleteEnum: (enumId: number) => void,
-    onDeleteVariant: (variantId: number) => void,
-    onReorderVariants: (enumId: number, variantIds: number[]) => void,
 } = $props();
+
+let variants = $derived(store.enumVariantsByEnumId.get(enumData.id) ?? []);
 
 let editingEnum = $state(false);
 let activeVariantId = $state<number | null>(null);
@@ -69,7 +58,7 @@ const handleDrop = (event: DragEvent, targetIndex: number) => {
     }
     newVariants.splice(targetIndex, 0, draggedVariant);
     
-    onReorderVariants(enumData.id, newVariants.map(variant => variant.id));
+    store.reorderEnumVariants(enumData.id, newVariants.map(variant => variant.id));
     
     resetDragState();
 };
@@ -96,8 +85,6 @@ const resetDragState = () => {
         <Popover active={editingEnum}>
             <EnumSettingsMenu
                 enumData={enumData}
-                {onUpdateEnum}
-                {onDeleteEnum}
                 onClose={() => editingEnum = false}
             />
         </Popover>
@@ -133,7 +120,7 @@ const resetDragState = () => {
                     <Popover active={activeVariantId === variant.id}>
                         <EnumVariantSettingsMenu
                             {variant}
-                            {onDeleteVariant}
+                            enumId={enumData.id}
                             onClose={() => activeVariantId = null}
                         />
                     </Popover>
@@ -142,13 +129,13 @@ const resetDragState = () => {
                 <input
                     type="text"
                     value={variant.label}
-                    onchange={(e) => onUpdateVariant(variant.id, e.currentTarget.value)}
+                    onchange={(e) => store.updateEnumVariant(variant.id, e.currentTarget.value)}
                 />
             </li>
         {/each}
     </ul>
 
-    <button onclick={() => onAddVariant(enumData.id, "")}>Add variant</button>
+    <button onclick={() => store.addEnumVariant(enumData.id, "")}>Add variant</button>
 </div>
 
 <style lang="scss">
@@ -199,4 +186,3 @@ h3 {
     margin: 0 0 0.5rem 0;
 }
 </style>
-

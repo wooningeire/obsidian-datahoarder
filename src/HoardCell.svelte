@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { store } from "Store.svelte";
+import { store } from "Store.svelte";
 
 let {
     row,
     column,
     value,
-    onUpdateCell,
+    tableId,
 }: {
     row: any,
     column: any,
     value: string,
-    onUpdateCell: (rowId: number, columnId: number, value: string) => void,
+    tableId: number,
 } = $props();
 </script>
 
@@ -18,13 +18,13 @@ let {
     <input 
         type="number" 
         {value}
-        onchange={(e) => onUpdateCell(row.id, column.id, e.currentTarget.value)} 
+        onchange={(e) => store.updateCell(row.id, column.id, e.currentTarget.value, tableId)} 
     />
 {:else if column.datatype === "date"}
     <input 
         type="datetime-local" 
         {value}
-        onchange={(e) => onUpdateCell(row.id, column.id, e.currentTarget.value)} 
+        onchange={(e) => store.updateCell(row.id, column.id, e.currentTarget.value, tableId)} 
     />
 {:else if column.datatype.startsWith("enum:")}
     {@const enumId = parseInt(column.datatype.slice("enum:".length))}
@@ -33,7 +33,7 @@ let {
     
     <select
         value={value}
-        onchange={(e) => onUpdateCell(row.id, column.id, e.currentTarget.value)}
+        onchange={(e) => store.updateCell(row.id, column.id, e.currentTarget.value, tableId)}
     >
         <option value=""></option>
         {#each variants as variant}
@@ -44,6 +44,6 @@ let {
     <input 
         type="text" 
         {value}
-        onchange={(e) => onUpdateCell(row.id, column.id, e.currentTarget.value)} 
+        onchange={(e) => store.updateCell(row.id, column.id, e.currentTarget.value, tableId)} 
     />
 {/if}

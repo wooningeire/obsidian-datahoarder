@@ -1,19 +1,11 @@
 <script lang="ts">
+import { store } from "./Store.svelte";
+
 let {
     enumData,
-    onUpdateEnum,
-    onDeleteEnum,
     onClose,
 }: {
     enumData: { id: number; label: string },
-    onUpdateEnum: ({
-        enumId,
-        label,
-    }: {
-        enumId: number,
-        label?: string,
-    }) => void,
-    onDeleteEnum: (enumId: number) => void,
     onClose: () => void,
 } = $props();
 </script>
@@ -27,11 +19,11 @@ let {
             type="text"
             id="enum-label"
             bind:value={enumData.label}
-            onchange={event => onUpdateEnum({ enumId: enumData.id, label: event.currentTarget.value })}
+            onchange={event => store.updateEnum({ enumId: enumData.id, label: event.currentTarget.value })}
         />
     </div>
 
-    <button class="delete-btn" onclick={() => { onDeleteEnum(enumData.id); onClose(); }}>
+    <button class="delete-btn" onclick={() => { store.deleteEnum(enumData.id); onClose(); }}>
         Delete enum
     </button>
 </div>

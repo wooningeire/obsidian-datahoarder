@@ -1,11 +1,13 @@
 <script lang="ts">
+import { store } from "./Store.svelte";
+
 let {
     variant,
-    onDeleteVariant,
+    enumId,
     onClose,
 }: {
     variant: { id: number; label: string },
-    onDeleteVariant: (variantId: number) => void,
+    enumId: number,
     onClose: () => void,
 } = $props();
 </script>
@@ -13,7 +15,7 @@ let {
 <div class="variant-settings">
     <h4>Variant Settings</h4>
 
-    <button class="delete-btn" onclick={() => { onDeleteVariant(variant.id); onClose(); }}>
+    <button class="delete-btn" onclick={() => { store.deleteEnumVariant(variant.id, enumId); onClose(); }}>
         Delete variant
     </button>
 </div>

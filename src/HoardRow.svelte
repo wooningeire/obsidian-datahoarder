@@ -7,14 +7,12 @@ let {
     row,
     columns,
     cells,
-    onUpdateCell,
-    onDeleteRow,
+    tableId,
 }: {
     row: any,
     columns: any[],
     cells: any,
-    onUpdateCell: (rowId: number, columnId: number, value: string) => void,
-    onDeleteRow: (rowId: number) => void,
+    tableId: number,
 } = $props();
 
 let showSettings = $state(false);
@@ -26,7 +24,7 @@ let showSettings = $state(false);
     <Popover active={showSettings}>
         <RowSettingsMenu
             {row}
-            {onDeleteRow}
+            {tableId}
             onClose={() => showSettings = false}
         />
     </Popover>
@@ -38,7 +36,7 @@ let showSettings = $state(false);
             {row}
             {column}
             value={cells[row.id]?.[column.id] ?? ""} 
-            {onUpdateCell}
+            {tableId}
         />
     </div>
 {/each}

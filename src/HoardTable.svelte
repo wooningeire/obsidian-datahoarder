@@ -3,41 +3,20 @@ import HoardRow from "HoardRow.svelte";
 import ColumnSettingsMenu from "ColumnSettingsMenu.svelte";
 import TableSettingsMenu from "TableSettingsMenu.svelte";
 import Popover from "Popover.svelte";
+import { store } from "Store.svelte";
 
 let {
     table,
-    columns,
-    rows,
-    cells,
-    onAddColumn,
-    onUpdateColumn,
-    onDeleteColumn,
-    onUpdateTable,
-    onDeleteTable,
-    onAddRow,
-    onDeleteRow,
-    onUpdateCell,
-    onReorderColumns,
 }: {
     table: any,
-    columns: any[],
-    rows: any[],
-    cells: any,
-    onAddColumn: ({ tableId, label, datatype }: { tableId: number, label: string, datatype: string }) => number,
-    onUpdateColumn: ({ columnId, label, datatype }: { columnId: number, label?: string, datatype?: string }) => void,
-    onDeleteColumn: (columnId: number) => void,
-    onUpdateTable: ({ tableId, label }: { tableId: number, label?: string }) => void,
-    onDeleteTable: (tableId: number) => void,
-    onAddRow: (tableId: number) => void,
-    onDeleteRow: (rowId: number) => void,
-    onUpdateCell: (rowId: number, columnId: number, value: string) => void,
-    onReorderColumns: (tableId: number, columnIds: number[]) => void,
 } = $props();
+
+let columns = $derived(store.columnsByTable[table.id] ?? []);
+let rows = $derived(store.rowsByTable[table.id] ?? []);
+let cells = $derived(store.cellsByRowByTable[table.id] ?? {});
 
 let activeColumnId = $state<number | null>(null);
 let editingTable = $state(false);
-
-
 
 let draggedColumnId = $state<number | null>(null);
 let dropTargetIndex = $state<number | null>(null);
@@ -77,7 +56,7 @@ const handleDrop = (event: DragEvent, targetIndex: number) => {
     const [draggedColumn] = newColumns.splice(draggedIndex, 1);
     newColumns.splice(targetIndex, 0, draggedColumn);
     
-    onReorderColumns(table.id, newColumns.map(column => column.id));
+    store.reorderColumns(table.id, newColumns.map(column => column.id));
     
     resetDragState();
 };
@@ -105,8 +84,6 @@ const resetDragState = () => {
         <Popover active={editingTable}>
             <TableSettingsMenu
                 table={table}
-                {onUpdateTable}
-                {onDeleteTable}
                 onClose={() => editingTable = false}
             />
         </Popover>
@@ -116,7 +93,7 @@ const resetDragState = () => {
         {rows.length} rows
     </div>
     
-    <button onclick={() => onAddRow(table.id)}>Add row</button>
+    <button onclick={() => store.addRow(table.id)}>Add row</button>
     
     <div
         class="table-columns"
@@ -154,8 +131,7 @@ const resetDragState = () => {
                 <Popover active={activeColumnId === column.id}>
                     <ColumnSettingsMenu
                         column={column}
-                        {onUpdateColumn}
-                        {onDeleteColumn}
+                        tableId={table.id}
                         onClose={() => activeColumnId = null}
                     />
                 </Popover>
@@ -163,25 +139,24 @@ const resetDragState = () => {
         {/each}
 
         <button onclick={() => {
-            const columnId = onAddColumn({ tableId: table.id, label: "", datatype: "text" });
+            const columnId = store.addColumn({ tableId: table.id, label: "", datatype: "text" });
             activeColumnId = columnId;
         }}>+</button>
 
 
         {#each rows as row}
             <HoardRow
-                row={row}
-                columns={columns}
-                cells={cells}
-                onUpdateCell={onUpdateCell}
-                {onDeleteRow}
+                {row}
+                {columns}
+                {cells}
+                tableId={table.id}
             />
 
             <div></div>
         {/each}
     </div>
 
-    <button onclick={() => onAddRow(table.id)}>Add row</button>
+    <button onclick={() => store.addRow(table.id)}>Add row</button>
 </div>
 
 <style lang="scss">
@@ -242,4 +217,3 @@ h3 {
     margin: 0;
 }
 </style>
-

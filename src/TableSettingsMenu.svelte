@@ -1,21 +1,12 @@
 <script lang="ts">
 import type { Table } from "dbOps/DatahoarderDbOps";
+import { store } from "./Store.svelte";
 
 let {
     table,
-    onUpdateTable,
-    onDeleteTable,
     onClose,
 }: {
     table: Table,
-    onUpdateTable: ({
-        tableId,
-        label,
-    }: {
-        tableId: number,
-        label?: string,
-    }) => void,
-    onDeleteTable: (tableId: number) => void,
     onClose: () => void,
 } = $props();
 </script>
@@ -29,11 +20,11 @@ let {
             type="text"
             id="table-label"
             bind:value={table.label}
-            onchange={event => onUpdateTable({ tableId: table.id, label: event.currentTarget.value })}
+            onchange={event => store.updateTable({ tableId: table.id, label: event.currentTarget.value })}
         />
     </div>
 
-    <button class="delete-btn" onclick={() => { onDeleteTable(table.id); onClose(); }}>
+    <button class="delete-btn" onclick={() => { store.deleteTable(table.id); onClose(); }}>
         Delete table
     </button>
 </div>

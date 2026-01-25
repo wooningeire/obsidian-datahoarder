@@ -1,11 +1,13 @@
 <script lang="ts">
+import { store } from "./Store.svelte";
+
 let {
     row,
-    onDeleteRow,
+    tableId,
     onClose,
 }: {
     row: { id: number },
-    onDeleteRow: (rowId: number) => void,
+    tableId: number,
     onClose: () => void,
 } = $props();
 </script>
@@ -13,7 +15,7 @@ let {
 <div class="row-settings">
     <h4>Row Settings</h4>
 
-    <button class="delete-btn" onclick={() => { onDeleteRow(row.id); onClose(); }}>
+    <button class="delete-btn" onclick={() => { store.deleteRow(row.id, tableId); onClose(); }}>
         Delete row
     </button>
 </div>

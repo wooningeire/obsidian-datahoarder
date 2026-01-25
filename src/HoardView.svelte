@@ -2,11 +2,9 @@
 import { onMount } from "svelte";
 import type { DatahoarderDbOps } from "./dbOps/DatahoarderDbOps";
 
-import { Notice } from "obsidian";
 import HoardTable from "HoardTable.svelte";
 import HoardEnum from "HoardEnum.svelte";
 import { store } from "Store.svelte";
-	import { SvelteMap } from "svelte/reactivity";
 
 let {
     dbOps,
@@ -14,241 +12,33 @@ let {
     dbOps: DatahoarderDbOps,
 } = $props();
 
-let modified = $state(false);
-
-
 let newTableName = $state("");
-
-let columnsByTable = $state<Record<number, ReturnType<typeof dbOps.selectColumns>>>({});
-let rowsByTable = $state<Record<number, ReturnType<typeof dbOps.selectRows>>>({});
-
-let cellsByRowByTable = $state<Record<number, Record<number, Record<number, string>>>>({});
-
 let newEnumName = $state("");
 
-const refreshTables = () => {
-    try {
-        store.tables = dbOps.selectTables();
-        for (const table of store.tables.values()) {
-            refreshTableInfo(table.id);
-        }
-    } catch (error) {
-        console.error("Failed to refresh tables:", error);
-        new Notice("Failed to load tables: " + error);
-    }
-};
-
-const refreshTableInfo = (tableId: number) => {
-    columnsByTable[tableId] = dbOps.selectColumns(tableId);
-    rowsByTable[tableId] = dbOps.selectRows(tableId);
-    
-    const cells = dbOps.selectCells(tableId);
-    const cellsByRow: Record<number, Record<number, string>> = {};
-    for (const cell of cells) {
-        const row: Record<number, string> = cellsByRow[cell.row_id] ?? {};
-        row[cell.column_id] = cell.value;
-        cellsByRow[cell.row_id] = row;
-    }
-    cellsByRowByTable[tableId] = cellsByRow;
-}
-
-const refreshEnums = () => {
-    try {
-        store.enums = dbOps.selectEnums();
-
-        const enumVariantsByEnumId = new SvelteMap<number, any>();
-        for (const enumItem of store.enums.values()) {
-            enumVariantsByEnumId.set(enumItem.id, dbOps.selectEnumVariants(enumItem.id));
-        }
-        store.enumVariantsByEnumId = enumVariantsByEnumId;
-    } catch (error) {
-        console.error("Failed to refresh enums:", error);
-        new Notice("Failed to load enums: " + error);
-    }
-};
-
 onMount(() => {
-    refreshTables();
-    refreshEnums();
+    store.dbOps = dbOps;
+    store.refreshTables();
+    store.refreshEnums();
 });
 
-async function createTable() {
+const createTable = () => {
     if (!newTableName) return;
-    try {
-        console.log("Creating table:", newTableName);
-        await dbOps.createTable(newTableName);
-        newTableName = "";
-        refreshTables();
-        modified = true;
-        new Notice("Table created");
-    } catch (e) {
-        console.error("Failed to create table:", e);
-        new Notice("Failed to create table: " + e);
-    }
-}
-
-const addColumn = ({
-    tableId,
-    label,
-    datatype,
-}: {
-    tableId: number,
-    label: string,
-    datatype: string,
-}) => {
-    const columnId = dbOps.addColumn(tableId, label, datatype);
-    refreshTableInfo(tableId);
-    modified = true;
-    return columnId;
-};
-
-const updateColumn = ({
-    columnId,
-    label,
-    datatype,
-}: {
-    columnId: number,
-    label?: string,
-    datatype?: string,
-}) => {
-    if (label) {
-        dbOps.updateColumnLabel(columnId, label);
-    }
-    if (datatype) {
-        dbOps.updateColumnDatatype(columnId, datatype);
-    }
-    refreshTables(); // Or just the specific table info
-    modified = true;
-};
-
-const reorderColumns = (tableId: number, columnIds: number[]) => {
-    dbOps.reorderColumns(columnIds);
-    refreshTableInfo(tableId);
-    modified = true;
-};
-
-const updateTable = ({
-    tableId,
-    label,
-}: {
-    tableId: number,
-    label?: string,
-}) => {
-    if (label) {
-        dbOps.updateTableLabel(tableId, label);
-    }
-    refreshTables();
-    modified = true;
-};
-
-const addRow = (tableId: number) => {
-    dbOps.addRow(tableId);
-    refreshTableInfo(tableId);
-    modified = true;
-};
-
-const updateCell = (rowId: number, columnId: number, value: string) => {
-    if (!cellsByRowByTable[rowId]) cellsByRowByTable[rowId] = {};
-    cellsByRowByTable[rowId][columnId] = value;
-    
-    dbOps.updateCell(rowId, columnId, value);
-    modified = true;
-};
-
-const save = async () => {
-    await dbOps.save();
-    modified = false;
+    store.createTable(newTableName);
+    newTableName = "";
 };
 
 const createEnum = () => {
     if (!newEnumName) return;
-    try {
-        dbOps.createEnum(newEnumName);
-        newEnumName = "";
-        refreshEnums();
-        modified = true;
-        new Notice("Enum created");
-    } catch (e) {
-        console.error("Failed to create enum:", e);
-        new Notice("Failed to create enum: " + e);
-    }
-}
-
-const addEnumVariant = (enumId: number, label: string) => {
-    const variantId = dbOps.addEnumVariant(enumId, label);
-    store.enumVariantsByEnumId.set(enumId, dbOps.selectEnumVariants(enumId));
-    modified = true;
-    return variantId;
-};
-
-const updateEnumVariant = (variantId: number, label: string) => {
-    dbOps.updateEnumVariantLabel(variantId, label);
-    refreshEnums();
-    modified = true;
-};
-
-const updateEnum = ({
-    enumId,
-    label,
-}: {
-    enumId: number,
-    label?: string,
-}) => {
-    if (label) {
-        dbOps.updateEnumLabel(enumId, label);
-    }
-    refreshEnums();
-    modified = true;
-};
-
-const reorderEnumVariants = (enumId: number, variantIds: number[]) => {
-    dbOps.reorderEnumVariants(variantIds);
-    store.enumVariantsByEnumId.set(enumId, dbOps.selectEnumVariants(enumId));
-    modified = true;
-};
-
-// --- Delete Operations ---
-
-const deleteTable = (tableId: number) => {
-    dbOps.deleteTable(tableId);
-    refreshTables();
-    modified = true;
-};
-
-const deleteColumn = (columnId: number, tableId: number) => {
-    dbOps.deleteColumn(columnId);
-    refreshTableInfo(tableId);
-    modified = true;
-};
-
-const deleteRow = (rowId: number, tableId: number) => {
-    dbOps.deleteRow(rowId);
-    refreshTableInfo(tableId);
-    modified = true;
-};
-
-const deleteEnum = (enumId: number) => {
-    dbOps.deleteEnum(enumId);
-    refreshEnums();
-    modified = true;
-};
-
-const deleteEnumVariant = (variantId: number, enumId: number) => {
-    dbOps.deleteEnumVariant(variantId);
-    store.enumVariantsByEnumId.set(enumId, dbOps.selectEnumVariants(enumId));
-    modified = true;
+    store.createEnum(newEnumName);
+    newEnumName = "";
 };
 </script>
-
-
-
-
 
 <div class="hoard-editor">
     <div class="controls">
         <button
-            onclick={save}
-            disabled={!modified}
+            onclick={() => store.save()}
+            disabled={!store.modified}
         >
             Save
         </button>
@@ -270,13 +60,6 @@ const deleteEnumVariant = (variantId: number, enumId: number) => {
         {#each store.enums.values() as enumItem}
             <HoardEnum
                 enumData={enumItem}
-                variants={store.enumVariantsByEnumId.get(enumItem.id) ?? []}
-                onAddVariant={addEnumVariant}
-                onUpdateVariant={updateEnumVariant}
-                onUpdateEnum={updateEnum}
-                onDeleteEnum={deleteEnum}
-                onDeleteVariant={(variantId) => deleteEnumVariant(variantId, enumItem.id)}
-                onReorderVariants={reorderEnumVariants}
             />
         {/each}
     </div>
@@ -296,18 +79,6 @@ const deleteEnumVariant = (variantId: number, enumId: number) => {
         {#each store.tables.values() as table}
             <HoardTable
                 table={table}
-                columns={columnsByTable[table.id] ?? []}
-                rows={rowsByTable[table.id] ?? []}
-                cells={cellsByRowByTable[table.id] ?? {}}
-                onAddColumn={addColumn}
-                onUpdateColumn={updateColumn}
-                onDeleteColumn={(columnId) => deleteColumn(columnId, table.id)}
-                onUpdateTable={updateTable}
-                onDeleteTable={deleteTable}
-                onAddRow={addRow}
-                onDeleteRow={(rowId) => deleteRow(rowId, table.id)}
-                onUpdateCell={updateCell}
-                onReorderColumns={reorderColumns}
             />
         {/each}
     </div>
