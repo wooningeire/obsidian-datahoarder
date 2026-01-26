@@ -4,15 +4,30 @@ import ColumnSettingsMenu from "./ColumnSettingsMenu.svelte";
 import TableSettingsMenu from "./TableSettingsMenu.svelte";
 import Popover from "./Popover.svelte";
 import { store } from "./Store.svelte";
+import type { Column } from "../dbOps/DatahoarderDbOps";
 
 let {
     table,
+    displayedColumnIds,
+    displayedRows,
 }: {
     table: any,
+    displayedColumnIds?: number[],
+    displayedRows?: { id: number }[],
 } = $props();
 
-let columns = $derived(store.columnsByTable[table.id] ?? []);
-let rows = $derived(store.rowsByTable[table.id] ?? []);
+let allColumns = $derived(store.columnsByTable[table.id] ?? []);
+
+let columns = $derived.by(() => {
+    if (displayedColumnIds) {
+        // preserve order of displayedColumnIds
+        return displayedColumnIds
+            .map(id => allColumns.find(c => c.id === id))
+            .filter((c): c is Column => c !== undefined);
+    }
+    return allColumns;
+});
+let rows = $derived(displayedRows ?? store.rowsByTable[table.id] ?? []);
 let cells = $derived(store.cellsByRowByTable[table.id] ?? {});
 
 let activeColumnId = $state<number | null>(null);

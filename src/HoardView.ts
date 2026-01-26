@@ -1,13 +1,13 @@
 import { TextFileView, WorkspaceLeaf } from 'obsidian';
 import { mount, unmount } from 'svelte';
-import HoardFileView from './components/HoardFileView.svelte';
+import HoardViewFileView from './components/HoardViewFileView.svelte';
 import type { DatahoarderDbOps } from './dbOps/DatahoarderDbOps';
 
 export const VIEW_TYPE_HOARD = 'hoard-view';
 
 export class HoardView extends TextFileView {
   component: any;
-  private data: string = "";
+  data = "";
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -25,10 +25,16 @@ export class HoardView extends TextFileView {
   }
 
   async onOpen() {
-    this.component = mount(HoardFileView, {
+    this.component = mount(HoardViewFileView as any, {
       target: this.contentEl,
       props: {
-        dbOps: this.dbOps
+        dbOps: this.dbOps,
+        onChange: (content: string) => {
+            if (content !== this.data) {
+                // this.data = content;
+                this.requestSave();
+            }
+        }
       }
     });
 
