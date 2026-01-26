@@ -211,6 +211,14 @@ export class DatahoarderDbOps {
     deleteEnumVariant(variantId: number) {
         this.db.run("DELETE FROM EnumVariants WHERE id = ?", [variantId]);
     }
+
+    exec(sql: string) {
+        return this.db.exec(sql);
+    }
+
+    run(sql: string) {
+        return this.db.run(sql);
+    }
 }
 
 export type Table = {

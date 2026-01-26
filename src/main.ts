@@ -3,6 +3,7 @@ import {DEFAULT_SETTINGS, type MyPluginSettings, SampleSettingTab} from "./setti
 import {createSqljs} from "./sqljs";
 import type { Database, SqlJsStatic } from "sql.js";
 import { HoardEditorView, VIEW_TYPE_EXAMPLE } from './HoardEditorView';
+import { HoardView, VIEW_TYPE_HOARD } from './HoardView';
 import { DatahoarderDbOps } from 'dbOps/DatahoarderDbOps';
 
 
@@ -34,6 +35,13 @@ export default class DatahoarderPlugin extends Plugin {
 			VIEW_TYPE_EXAMPLE,
 			(leaf) => new HoardEditorView(leaf, dbOps),
 		);
+
+		this.registerView(
+			VIEW_TYPE_HOARD,
+			(leaf) => new HoardView(leaf, dbOps),
+		);
+
+		this.registerExtensions(["hoardview"], VIEW_TYPE_HOARD);
 
 		this.addRibbonIcon('dice', 'Activate view', () => {
 			this.activateView();

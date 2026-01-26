@@ -77,9 +77,7 @@ const createEnum = () => {
 
     <div class="tables-list">
         {#each store.tables.values() as table}
-            <HoardTable
-                table={table}
-            />
+            <HoardTable {table} />
         {/each}
     </div>
 </div>
