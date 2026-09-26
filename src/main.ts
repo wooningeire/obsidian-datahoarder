@@ -5,6 +5,7 @@ import type { Database, SqlJsStatic } from "sql.js";
 import { HoardEditorView, VIEW_TYPE_EXAMPLE } from './HoardEditorView';
 import { HoardView, VIEW_TYPE_HOARD } from './HoardView';
 import { DatahoarderDbOps } from 'dbOps/DatahoarderDbOps';
+import { DatahoardBaseView, MyBasesView } from 'DatahoardBaseView';
 
 
 const readDb = async (app: App, sqljs: SqlJsStatic) => {
@@ -41,7 +42,28 @@ export default class DatahoarderPlugin extends Plugin {
 			(leaf) => new HoardView(leaf, dbOps),
 		);
 
-		this.registerExtensions(["hoardview"], VIEW_TYPE_HOARD);
+		this.registerExtensions(["datahoard", "hoardview"], VIEW_TYPE_HOARD);
+
+		this.registerBasesView(DatahoardBaseView, {
+			name: "Whatever",
+			icon: 'lucide-graduation-cap',
+			factory: (controller, containerEl) => {
+				return new MyBasesView(controller, containerEl);
+			},
+			options: () => ([
+				{
+					// The type of option. 'text' is a text input.
+					type: 'text',
+					// The name displayed in the settings menu.
+					displayName: 'Property separator',
+					// The value saved to the view settings.
+					key: 'separator',
+					// The default value for this option.
+					default: ' - ',
+				},
+				// ...
+			]),
+		});
 
 		this.addRibbonIcon('dice', 'Activate view', () => {
 			this.activateView();
