@@ -16,7 +16,7 @@
 		"@types/node": "^25.0.9",
 		"@types/sql.js": "^1.4.9",
 		"esbuild": "0.27.2",
-		"esbuild-svelte": "^0.9.4",
+		"esbuild-svelte": "^0.9.5",
 		"globals": "17.0.0",
 		"sass": "^1.97.2",
 		"svelte": "^5.47.0",

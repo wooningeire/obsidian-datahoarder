@@ -5,7 +5,7 @@ import type { Database, SqlJsStatic } from "sql.js";
 import { HoardEditorView, VIEW_TYPE_EXAMPLE } from './HoardEditorView';
 import { HoardView, VIEW_TYPE_HOARD } from './HoardView';
 import { DatahoarderDbOps } from 'dbOps/DatahoarderDbOps';
-import { DatahoardBaseView, MyBasesView } from 'DatahoardBaseView';
+import { DatahoardBaseView, MyBasesView } from 'base-view/DatahoardBaseView';
 
 
 const readDb = async (app: App, sqljs: SqlJsStatic) => {
