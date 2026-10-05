@@ -1,5 +1,6 @@
 import esbuild from "esbuild";
 import process from "process";
+import path from "node:path";
 import { builtinModules } from 'node:module';
 import { copyFileSync } from 'node:fs';
 
@@ -14,6 +15,7 @@ if you want to view the source, please visit the github repository of this plugi
 `;
 
 const prod = (process.argv[2] === "production");
+const srcLib = path.resolve("src/lib");
 
 try {
 	copyFileSync("node_modules/sql.js/dist/sql-wasm.wasm", "sql-wasm.wasm");
@@ -28,11 +30,30 @@ const context = await esbuild.context({
 	entryPoints: ["src/main.ts"],
 	bundle: true,
 	plugins: [
+		// resolve $/ and $lib/ to src/lib/
+		{
+			name: "dollar-alias",
+			setup(build) {
+				build.onResolve({ filter: /^\$\// }, args => ({
+					path: path.resolve(srcLib, args.path.slice(2)),
+				}));
+				build.onResolve({ filter: /^\$lib\// }, args => ({
+					path: path.resolve(srcLib, args.path.slice(5)),
+				}));
+			},
+		},
 		esbuildSvelte({
 			compilerOptions: {
 				css: 'injected',
 			},
-			preprocess: [sveltePreprocess()],
+			preprocess: [sveltePreprocess({
+				scss: {
+					importer(url) {
+						if (!url.startsWith('$/')) return null;
+						return { file: path.resolve(srcLib, url.slice(2)).replace(/\\/g, '/') };
+					},
+				},
+			})],
 		}),
 	],
 	external: [
