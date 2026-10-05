@@ -4,13 +4,16 @@ import ConfigPanel from "./HoardView/ConfigPanel.svelte";
 import type { DatahoarderDbOps } from "../dbOps/DatahoarderDbOps";
 import { store } from "./Store.svelte";
 import { onMount } from "svelte";
+import type { TFile } from "obsidian";
 
 let {
     dbOps,
     onChange,
+    files,
 }: {
     dbOps: DatahoarderDbOps,
     onChange: (content: string) => void,
+    files: TFile[] | null,
 } = $props();
 
 let loadedFileContent = $state<string | null>(null);
@@ -119,7 +122,11 @@ const triggerChange = () => {
 
 </script>
 
-<div class="hoard-view-file-view">
+{#each files as file}
+    {file.name}
+{/each}
+
+<!-- <div class="hoard-view-file-view">
     <ConfigPanel
         bind:config={config}
         {tables}
@@ -140,7 +147,7 @@ const triggerChange = () => {
             </div>
         {/if}
     </div>
-</div>
+</div> -->
 
 <style>
     .hoard-view-file-view {
