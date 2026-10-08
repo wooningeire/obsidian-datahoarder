@@ -1,19 +1,22 @@
 <script lang="ts">
-import HoardTable from "./HoardTable.svelte";
-import ConfigPanel from "./HoardView/ConfigPanel.svelte";
 import type { DatahoarderDbOps } from "../dbOps/DatahoarderDbOps";
-import { store } from "./Store.svelte";
+import { Store, store } from "./Store.svelte";
 import { onMount } from "svelte";
-import type { TFile } from "obsidian";
+import { type TFile } from "obsidian";
+import type { HoardView } from "HoardView";
+	import HoardFileView from "./HoardFileView.svelte";
+	import { HoardViewStore } from "./HoardViewStore.svelte";
 
 let {
     dbOps,
     onChange,
     files,
+    view,
 }: {
     dbOps: DatahoarderDbOps,
     onChange: (content: string) => void,
     files: TFile[] | null,
+    view: HoardView,
 } = $props();
 
 let loadedFileContent = $state<string | null>(null);
@@ -47,73 +50,13 @@ let config = $state<{
     sorts: []
 });
 
-onMount(() => {
-    store.dbOps = dbOps;
-    store.refreshTables();
-});
+// onMount(() => {
+//     store.dbOps = dbOps;
+//     store.refreshTables();
+// });
 
-// Derived State for UI
-let tables = $derived(Array.from(store.tables.values()));
-let selectedTable = $derived(
-    config.source?.type === "table" 
-        ? store.tables.get(config.source.tableId) 
-        : null
-);
-let availableColumns = $derived(
-    selectedTable 
-        ? store.columnsByTable[selectedTable.id] ?? []
-        : []
-);
-
-let allRows = $derived(
-    selectedTable
-        ? store.rowsByTable[selectedTable.id] ?? []
-        : []
-);
-
-let processedRows = $derived.by(() => {
-    if (!selectedTable) return [];
-    
-    let rows = [...allRows];
-    
-    // Apply Filters
-    if (config.filters && config.filters.length > 0) {
-        rows = rows.filter(row => {
-            return config.filters.every(filter => {
-                const cellValue = store.cellsByRowByTable[selectedTable!.id]?.[row.id]?.[filter.columnId] ?? "";
-                const filterValue = filter.value.toLowerCase();
-                const cellValueLower = cellValue.toLowerCase();
-
-                switch (filter.operator) {
-                    case "contains": return cellValueLower.includes(filterValue);
-                    case "equals": return cellValueLower === filterValue;
-                    case "startsWith": return cellValueLower.startsWith(filterValue);
-                    case "endsWith": return cellValueLower.endsWith(filterValue);
-                    case "notContains": return !cellValueLower.includes(filterValue);
-                    case "notEquals": return cellValueLower !== filterValue;
-                    default: return true;
-                }
-            });
-        });
-    }
-
-    // Apply Sorts
-    if (config.sorts && config.sorts.length > 0) {
-        rows.sort((a, b) => {
-            for (const sort of config.sorts) {
-                const valA = store.cellsByRowByTable[selectedTable!.id]?.[a.id]?.[sort.columnId] ?? "";
-                const valB = store.cellsByRowByTable[selectedTable!.id]?.[b.id]?.[sort.columnId] ?? "";
-                
-                if (valA === valB) continue;
-                
-                const comparison = valA.localeCompare(valB, undefined, { numeric: true });
-                return sort.direction === 'asc' ? comparison : -comparison;
-            }
-            return 0;
-        });
-    }
-
-    return rows;
+HoardViewStore.mount({
+    view,
 });
 
 const triggerChange = () => {
@@ -122,9 +65,15 @@ const triggerChange = () => {
 
 </script>
 
-{#each files as file}
-    {file.name}
-{/each}
+{#if files === null}
+    Something went wrong
+{:else}
+    <hoard-view-file-view>
+        {#each files as file}
+            <HoardFileView {file} />
+        {/each}
+    </hoard-view-file-view>
+{/if}
 
 <!-- <div class="hoard-view-file-view">
     <ConfigPanel
@@ -150,24 +99,10 @@ const triggerChange = () => {
 </div> -->
 
 <style>
-    .hoard-view-file-view {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        height: 100%;
-    }
-
-    .view-content {
-        flex: 1;
-        overflow: auto;
-        padding: 1rem;
-    }
-
-    .empty-state {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        color: var(--text-muted);
-    }
+hoard-view-file-view {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: 100%;
+}
 </style>

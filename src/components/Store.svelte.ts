@@ -11,6 +11,7 @@ let cellsByRowByTable = $state<Record<number, Record<number, Record<number, stri
 let modified = $state(false);
 let dbOps = $state<DatahoarderDbOps | null>(null);
 
+
 export class Store {
     get tables() { return tables; }
     set tables(value: Map<number, Table>) { tables = value; }

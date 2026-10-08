@@ -6,73 +6,67 @@ import type { DatahoarderDbOps } from './dbOps/DatahoarderDbOps';
 export const VIEW_TYPE_HOARD = 'hoard-view';
 
 export class HoardView extends TextFileView {
-  component: any;
-  data = "";
+    private component: HoardViewFileView | null = null;
 
 
-  constructor(
-    leaf: WorkspaceLeaf,
-    private dbOps: DatahoarderDbOps
-  ) {
-    super(leaf);
-  }
-
-  getViewType() {
-    return VIEW_TYPE_HOARD;
-  }
-
-  getDisplayText() {
-    return this.file ? this.file.basename : 'Hoard View';
-  }
-
-  async onLoadFile(file: TFile) {
-    const dataFolder = file.parent?.children.find(child => child.name === "Data" && child instanceof TFolder) as TFolder | undefined ?? null;
-    const files = dataFolder?.children.filter(file => file instanceof TFile) ?? null;
-
-    this.component = mount(HoardViewFileView, {
-      target: this.contentEl,
-      props: {
-        dbOps: this.dbOps,
-        onChange: (content: string) => {
-            if (content !== this.data) {
-                // this.data = content;
-                this.requestSave();
-            }
-        },
-        files,
-      }
-    });
-
-    if (this.data) {
-      this.component.setLoadedFileContent(this.data);
-      this.data = "";
+    constructor(
+        leaf: WorkspaceLeaf,
+        private dbOps: DatahoarderDbOps
+    ) {
+        super(leaf);
     }
-  }
 
-  async onClose() {
-    if (this.component) {
-      unmount(this.component);
+    getViewType() {
+        return VIEW_TYPE_HOARD;
     }
-  }
 
-  // Get the data from the view to save to disk
-  getViewData(): string {
-    return this.component ? this.component.getLoadedFileContent() : this.data;
-  }
-
-  // Load data from disk into the view
-  setViewData(data: string, clear: boolean): void {
-    if (this.component) {
-      this.component.setLoadedFileContent(data);
-    } else {
-      this.data = data;
+    getDisplayText() {
+        return this.file ? this.file.basename : 'Hoard View';
     }
-  }
 
-  clear(): void {
-    if (this.component) {
-        this.component.setLoadedFileContent("");
+    async onLoadFile(file: TFile) {
+        const dataFolder = file.parent?.children.find(child => child.name === "Data" && child instanceof TFolder) as TFolder | undefined ?? null;
+        const files = dataFolder?.children.filter(file => file instanceof TFile) ?? null;
+
+        this.component = mount(HoardViewFileView, {
+            target: this.contentEl,
+            props: {
+                dbOps: this.dbOps,
+                onChange: (content: string) => {
+                    if (content !== this.data) {
+                        // this.data = content;
+                        this.requestSave();
+                    }
+                },
+                files,
+                view: this,
+            },
+        });
     }
-    this.data = "";
-  }
+
+    async onClose() {
+        if (this.component === null) return;
+        unmount(this.component);
+    }
+
+    // Get the data from the view to save to disk
+    getViewData(): string {
+        return this.component ? this.component.getLoadedFileContent() : this.data;
+    }
+
+    // Load data from disk into the view
+    setViewData(data: string, clear: boolean): void {
+        if (this.component) {
+            this.component.setLoadedFileContent(data);
+        } else {
+            this.data = data;
+        }
+    }
+
+    clear(): void {
+        if (this.component) {
+            this.component.setLoadedFileContent("");
+        }
+        this.data = "";
+    }
 }
