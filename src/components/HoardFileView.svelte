@@ -1,6 +1,7 @@
 <script lang="ts">
-import { Keymap, type TFile } from "obsidian";
+import { Keymap, type CachedMetadata, type EventRef, type TFile } from "obsidian";
 import { HoardViewStore } from "./HoardViewStore.svelte";
+	import { onDestroy, onMount } from "svelte";
 
 let {
     file,
@@ -11,8 +12,21 @@ let {
 const store = HoardViewStore.use();
 
 
-const frontmatterPromise = new Promise<object>(resolve => {
-    return store.view.app.fileManager.processFrontMatter(file, resolve);
+let cache = $derived(store.view.app.metadataCache.getFileCache(file));
+const frontmatter = $derived(cache?.frontmatter ?? {});
+
+
+const onCacheUpdate = (file: TFile, data: string, newCache: CachedMetadata) => {
+    cache = newCache;
+};
+let cacheChangedRef: EventRef;
+
+onMount(() => {
+    cacheChangedRef = store.view.app.metadataCache.on("changed", onCacheUpdate);
+});
+
+onDestroy(() => {
+    store.view.app.metadataCache.offref(cacheChangedRef);
 });
 </script>
 
@@ -40,11 +54,7 @@ const frontmatterPromise = new Promise<object>(resolve => {
         {file.name}
     </a>
 
-    {#await frontmatterPromise}
-        waiting...
-    {:then frontmatter}
-        {Object.keys(frontmatter)}
-    {/await}
+    {Object.entries(frontmatter)}
     <!-- {#each propertyOrder as propertyName}
         {entry.getValue(propertyName)}
     {/each} -->
