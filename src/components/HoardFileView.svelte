@@ -1,38 +1,30 @@
 <script lang="ts">
-import { Keymap, type CachedMetadata, type EventRef, type TFile } from "obsidian";
+import { Keymap, type FrontMatterCache, type TFile } from "obsidian";
 import { HoardViewStore } from "./HoardViewStore.svelte";
-	import { onDestroy, onMount } from "svelte";
 
 let {
     file,
+    frontmatter,
 }: {
     file: TFile,
+    frontmatter: FrontMatterCache,
 } = $props();
 
 const store = HoardViewStore.use();
-
-
-let cache = $derived(store.view.app.metadataCache.getFileCache(file));
-const frontmatter = $derived(cache?.frontmatter ?? {});
-
-
-const onCacheUpdate = (file: TFile, data: string, newCache: CachedMetadata) => {
-    cache = newCache;
+const showHover = (event: MouseEvent | FocusEvent) => {
+    store.view.app.workspace.trigger("hover-link", {
+        event,
+        source: "bases",
+        hoverParent: store.view,
+        targetEl: event.currentTarget,
+        linktext: file.path,
+    });
 };
-let cacheChangedRef: EventRef;
-
-onMount(() => {
-    cacheChangedRef = store.view.app.metadataCache.on("changed", onCacheUpdate);
-});
-
-onDestroy(() => {
-    store.view.app.metadataCache.offref(cacheChangedRef);
-});
 </script>
 
 <hoard-file>
-    {file.name}
     <a
+        href={file.path}
         onclick={event => {
             if (event.button !== 0 && event.button !== 1) return;
 
@@ -41,15 +33,8 @@ onDestroy(() => {
             const modEvent = Keymap.isModEvent(event);
             store.view.app.workspace.openLinkText(path, "", modEvent);
         }}
-        onmouseover={event => {
-            store.view.app.workspace.trigger('hover-link', {
-                event: event,
-                source: 'bases',
-                hoverParent: store.view,
-                targetEl: event.currentTarget,
-                linktext: file.path,
-            });
-        }}
+        onmouseover={showHover}
+        onfocus={showHover}
     >
         {file.name}
     </a>
@@ -59,3 +44,16 @@ onDestroy(() => {
         {entry.getValue(propertyName)}
     {/each} -->
 </hoard-file>
+
+<style lang="scss">
+hoard-file {
+    display: flex;
+    flex-direction: column;
+    width: 10em;
+
+    white-space: nowrap;
+    overflow: hidden;
+
+    border: 1px solid oklch(0 0 0);
+}
+</style>

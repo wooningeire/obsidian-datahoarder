@@ -1,15 +1,13 @@
 <script lang="ts">
 import type { DatahoarderDbOps } from "../dbOps/DatahoarderDbOps";
-import { Store, store } from "./Store.svelte";
 import { onMount } from "svelte";
 import { type TFile } from "obsidian";
 import type { HoardView } from "HoardView";
-	import HoardFileView from "./HoardFileView.svelte";
-	import { HoardViewStore } from "./HoardViewStore.svelte";
+import HoardFileView from "./HoardFileView.svelte";
+import { HoardViewStore } from "./HoardViewStore.svelte";
+import { getLeafTasks } from "./HoardView/leafTasks";
 
 let {
-    dbOps,
-    onChange,
     files,
     view,
 }: {
@@ -20,34 +18,24 @@ let {
 } = $props();
 
 let loadedFileContent = $state<string | null>(null);
+let metadataRevision = $state(0);
+const leafTasks = $derived.by(() => {
+    metadataRevision;
+    return getLeafTasks(files ?? [], view.app.metadataCache);
+});
 
-export const setLoadedFileContent = (content: string) => {
-    try {
-        const parsed = JSON.parse(content);
-        config = parsed;
-    } catch (e) {
-        if (!content) {
-            config = { source: null, columns: [], filters: [], sorts: [] };
-        }
-    }
-    loadedFileContent = content;
-};
+onMount(() => {
+    const metadataCache = view.app.metadataCache;
+    const refresh = () => { metadataRevision += 1; };
+    const changedRef = metadataCache.on("changed", file => {
+        if (files?.some(taskFile => taskFile.path === file.path)) refresh();
+    });
+    const resolvedRef = metadataCache.on("resolved", refresh);
 
-export const getLoadedFileContent = () => {
-    return JSON.stringify(config, null, 2);
-};
-
-// Configuration State
-let config = $state<{
-    source: { type: "table", tableId: number } | null,
-    columns: { type: "direct", columnId: number }[],
-    filters: { columnId: number, operator: string, value: string }[],
-    sorts: { columnId: number, direction: 'asc' | 'desc' }[]
-}>({
-    source: null,
-    columns: [],
-    filters: [],
-    sorts: []
+    return () => {
+        metadataCache.offref(changedRef);
+        metadataCache.offref(resolvedRef);
+    };
 });
 
 // onMount(() => {
@@ -58,19 +46,16 @@ let config = $state<{
 HoardViewStore.mount({
     view,
 });
-
-const triggerChange = () => {
-    onChange(JSON.stringify(config, null, 2));
-};
-
 </script>
 
 {#if files === null}
     Something went wrong
 {:else}
     <hoard-view-file-view>
-        {#each files as file}
-            <HoardFileView {file} />
+        {#each leafTasks as { file, frontmatter } (file.path)}
+            <HoardFileView {file} {frontmatter} />
+        {:else}
+            <p>No leaf tasks.</p>
         {/each}
     </hoard-view-file-view>
 {/if}
@@ -98,11 +83,12 @@ const triggerChange = () => {
     </div>
 </div> -->
 
-<style>
+<style lang="scss">
 hoard-view-file-view {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: 1rem;
-    height: 100%;
+
+    min-height: 100%;
 }
 </style>
