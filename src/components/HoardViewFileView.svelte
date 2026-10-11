@@ -146,7 +146,6 @@ hoardview-task-list {
     display: block;
     position: relative;
     height: calc(2em * var(--n-entries));
-    width: 100%;
 
     --n-entries: 0;
 }
