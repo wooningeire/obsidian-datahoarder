@@ -1,7 +1,7 @@
 import { TextFileView, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
 import { mount, unmount } from 'svelte';
-import HoardViewFileView from './components/HoardViewFileView.svelte';
-import type { DatahoarderDbOps } from './dbOps/DatahoarderDbOps';
+import HoardViewFileView from './HoardViewFileView.svelte';
+import type { DatahoarderDbOps } from '../dbOps/DatahoarderDbOps';
 
 export const VIEW_TYPE_HOARD = 'hoard-view';
 

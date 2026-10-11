@@ -2,10 +2,10 @@
 import type { DatahoarderDbOps } from "../dbOps/DatahoarderDbOps";
 import { onMount } from "svelte";
 import { type TFile } from "obsidian";
-import type { HoardView } from "HoardView";
+import type { HoardView } from "hoard-view/HoardView";
 import HoardFileView from "./HoardFileView.svelte";
 import { HoardViewStore } from "./HoardViewStore.svelte";
-import { getLeafTasks } from "./HoardView/leafTasks";
+import { getLeafTasks } from "./leafTasks";
 
 let {
     files,

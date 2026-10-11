@@ -1,4 +1,4 @@
-import type { HoardView } from "HoardView";
+import type { HoardView } from "hoardview/HoardView";
 import { getContext, setContext } from "svelte";
 
 

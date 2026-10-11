@@ -3,7 +3,7 @@ import {DEFAULT_SETTINGS, type MyPluginSettings, SampleSettingTab} from "./setti
 import {createSqljs} from "./sqljs";
 import type { Database, SqlJsStatic } from "sql.js";
 import { HoardEditorView, VIEW_TYPE_EXAMPLE } from './HoardEditorView';
-import { HoardView, VIEW_TYPE_HOARD } from './HoardView';
+import { HoardView, VIEW_TYPE_HOARD } from './hoardview/HoardView';
 import { DatahoarderDbOps } from 'dbOps/DatahoarderDbOps';
 import { DatahoardBaseView, MyBasesView } from 'base-view/DatahoardBaseView';
 
