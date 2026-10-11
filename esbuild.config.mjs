@@ -29,6 +29,7 @@ const context = await esbuild.context({
 	},
 	entryPoints: ["src/main.ts"],
 	bundle: true,
+    conditions: ["svelte", "module"],
 	plugins: [
 		// resolve $/ and $lib/ to src/lib/
 		{

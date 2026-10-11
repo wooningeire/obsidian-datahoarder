@@ -87,7 +87,7 @@ HoardViewStore.mount({
 hoard-view-file-view {
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 0.5em;
 
     min-height: 100%;
 }

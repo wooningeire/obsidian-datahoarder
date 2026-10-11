@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Keymap, type FrontMatterCache, type TFile } from "obsidian";
 import { HoardViewStore } from "./HoardViewStore.svelte";
+import { Button } from "@vaie/hui";
 
 let {
     file,
@@ -22,38 +23,40 @@ const showHover = (event: MouseEvent | FocusEvent) => {
 };
 </script>
 
-<hoard-file>
-    <a
-        href={file.path}
-        onclick={event => {
-            if (event.button !== 0 && event.button !== 1) return;
+<Button
+    --bg-col="var(--color-accent)"
+>
+    <hoard-file>
+        <a
+            href={file.path}
+            onclick={event => {
+                if (event.button !== 0 && event.button !== 1) return;
 
-            event.preventDefault();
-            const path = file.path;
-            const modEvent = Keymap.isModEvent(event);
-            store.view.app.workspace.openLinkText(path, "", modEvent);
-        }}
-        onmouseover={showHover}
-        onfocus={showHover}
-    >
-        {file.name}
-    </a>
+                event.preventDefault();
+                const path = file.path;
+                const modEvent = Keymap.isModEvent(event);
+                store.view.app.workspace.openLinkText(path, "", modEvent);
+            }}
+            onmouseover={showHover}
+            onfocus={showHover}
+        >
+            {file.name}
+        </a>
 
-    {Object.entries(frontmatter)}
-    <!-- {#each propertyOrder as propertyName}
-        {entry.getValue(propertyName)}
-    {/each} -->
-</hoard-file>
+        {Object.entries(frontmatter)}
+        <!-- {#each propertyOrder as propertyName}
+            {entry.getValue(propertyName)}
+        {/each} -->
+    </hoard-file>
+</Button>
 
 <style lang="scss">
 hoard-file {
     display: flex;
     flex-direction: column;
-    width: 10em;
+    width: 15em;
 
     white-space: nowrap;
     overflow: hidden;
-
-    border: 1px solid oklch(0 0 0);
 }
 </style>
