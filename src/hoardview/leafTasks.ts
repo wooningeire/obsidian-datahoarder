@@ -5,9 +5,9 @@ export type TaskFile = {
     frontmatter: FrontMatterCache,
 };
 
-export const getLeafTasks = (
+export const findLeafTasks = (
     files: TFile[],
-    metadataCache: Pick<MetadataCache, "getFileCache" | "getFirstLinkpathDest">,
+    metadataCache: MetadataCache,
 ): TaskFile[] => {
     const tasks = files[Symbol.iterator]()
         .filter(file => file.extension === "md")
@@ -37,5 +37,5 @@ export const getLeafTasks = (
     }
 
     return tasks
-        .filter(({ file }) => !parentPaths.has(file.path));
+        .filter(task => !parentPaths.has(task.file.path) && !["Done", "Dropped"].includes(task.frontmatter["Completion"]));
 };

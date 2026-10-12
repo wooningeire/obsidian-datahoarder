@@ -2,10 +2,10 @@
 import type { DatahoarderDbOps } from "../dbOps/DatahoarderDbOps";
 import { onMount } from "svelte";
 import { type TFile } from "obsidian";
-import type { HoardView } from "hoard-view/HoardView";
+import type { HoardView } from "./HoardView";
 import HoardFileView from "./HoardFileView.svelte";
 import { HoardViewStore } from "./HoardViewStore.svelte";
-import { getLeafTasks } from "./leafTasks";
+import { findLeafTasks } from "./leafTasks";
 
 let {
     files,
@@ -21,7 +21,7 @@ let loadedFileContent = $state<string | null>(null);
 let metadataRevision = $state(0);
 const leafTasks = $derived.by(() => {
     metadataRevision;
-    return getLeafTasks(files ?? [], view.app.metadataCache);
+    return findLeafTasks(files ?? [], view.app.metadataCache);
 });
 
 onMount(() => {
@@ -55,7 +55,7 @@ let hoardviewTaskListBounds = $derived.by(() => {
         return {
             startN: 0,
             endN: 0,
-        }
+        };
     }
 
     const style = getComputedStyle(hoardviewTaskListEl);
