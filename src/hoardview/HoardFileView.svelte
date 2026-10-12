@@ -27,7 +27,7 @@ const showHover = (event: MouseEvent | FocusEvent) => {
 <hoard-file
     style:--n-entry={index}
 >
-    <button>
+    <button onclick={() => store.selectedTask = file}>
         Open
     </button>
 

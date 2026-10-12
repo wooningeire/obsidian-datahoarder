@@ -8,7 +8,7 @@ export type TaskFile = {
 export const findLeafTasks = (
     files: TFile[],
     metadataCache: MetadataCache,
-): TaskFile[] => {
+) => {
     const tasks = files[Symbol.iterator]()
         .filter(file => file.extension === "md")
         .map(file => ({
@@ -16,10 +16,11 @@ export const findLeafTasks = (
             frontmatter: metadataCache.getFileCache(file)?.frontmatter ?? {},
         }))
         .toArray();
-    const parentPaths = new Set<string>();
+    const taskParents = new Map<TFile, TFile[]>(tasks.map(({file}) => [file, []]));
+    const taskChildren = new Map<TFile, TFile[]>(tasks.map(({file}) => [file, []]));
 
     for (const { file, frontmatter } of tasks) {
-        const parents: string = frontmatter["Parents"] ?? "";
+        const parents: string[] = frontmatter["Parents"] ?? [];
 
         for (const link of parents) {
             const trimmedLink = link.trim();
@@ -32,10 +33,15 @@ export const findLeafTasks = (
             );
             if (parent === null) continue;
 
-            parentPaths.add(parent.path);
+            taskParents.get(file)!.push(parent);
+            taskChildren.get(parent)!.push(file);
         }
     }
 
-    return tasks
-        .filter(task => !parentPaths.has(task.file.path) && !["Done", "Dropped"].includes(task.frontmatter["Completion"]));
+    return {
+        taskParents,
+        taskChildren,
+        leafTasks: tasks
+            .filter(task => taskChildren.get(task.file)!.length === 0 && !["Done", "Dropped"].includes(task.frontmatter["Completion"])),
+    }
 };

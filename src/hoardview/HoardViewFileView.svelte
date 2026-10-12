@@ -1,11 +1,10 @@
 <script lang="ts">
 import type { DatahoarderDbOps } from "../dbOps/DatahoarderDbOps";
-import { onMount } from "svelte";
 import { type TFile } from "obsidian";
 import type { HoardView } from "./HoardView";
 import HoardFileView from "./HoardFileView.svelte";
 import { HoardViewStore } from "./HoardViewStore.svelte";
-import { findLeafTasks } from "./leafTasks";
+import TaskDetails from "./task-details/TaskDetails.svelte";
 
 let {
     files,
@@ -17,34 +16,10 @@ let {
     view: HoardView,
 } = $props();
 
-let loadedFileContent = $state<string | null>(null);
-let metadataRevision = $state(0);
-const leafTasks = $derived.by(() => {
-    metadataRevision;
-    return findLeafTasks(files ?? [], view.app.metadataCache);
-});
 
-onMount(() => {
-    const metadataCache = view.app.metadataCache;
-    const refresh = () => { metadataRevision += 1; };
-    const changedRef = metadataCache.on("changed", file => {
-        if (files?.some(taskFile => taskFile.path === file.path)) refresh();
-    });
-    const resolvedRef = metadataCache.on("resolved", refresh);
-
-    return () => {
-        metadataCache.offref(changedRef);
-        metadataCache.offref(resolvedRef);
-    };
-});
-
-// onMount(() => {
-//     store.dbOps = dbOps;
-//     store.refreshTables();
-// });
-
-HoardViewStore.mount({
+const store = HoardViewStore.mount({
     view,
+    files,
 });
 
 let hoardviewTaskListEl: HTMLElement | null = $state(null);
@@ -75,69 +50,69 @@ let hoardviewTaskListBounds = $derived.by(() => {
     Something went wrong
 {:else}
     <hoardview-file-view>
-        <h2>Task list</h2>
+        <task-list-panel>
+            <h2>Task list</h2>
 
-        <hoardview-task-list-scroller
-            onscroll={() => {
-                hoardviewTaskListScrollTop = hoardviewTaskListEl!.scrollTop;
-            }}
-            bind:clientHeight={null, height => hoardviewTaskListClientHeight = height!}
-            bind:this={hoardviewTaskListEl}
-        >
-            <hoardview-task-list
-                style:--n-entries={leafTasks.length}
+            <hoardview-task-list-scroller
+                onscroll={() => {
+                    hoardviewTaskListScrollTop = hoardviewTaskListEl!.scrollTop;
+                }}
+                bind:clientHeight={null, height => hoardviewTaskListClientHeight = height!}
+                bind:this={hoardviewTaskListEl}
             >
-                {#each leafTasks.slice(hoardviewTaskListBounds.startN, hoardviewTaskListBounds.endN) as { file, frontmatter }, i (file.path)}
-                    <HoardFileView
-                        {file}
-                        {frontmatter}
-                        index={i + hoardviewTaskListBounds.startN}
-                    />
-                {:else}
-                    no leaf tasks
-                {/each}
-            </hoardview-task-list>
-        </hoardview-task-list-scroller>
+                <hoardview-task-list
+                    style:--n-entries={store.taskGraph.leafTasks.length}
+                >
+                    {#each store.taskGraph.leafTasks.slice(hoardviewTaskListBounds.startN, hoardviewTaskListBounds.endN) as { file, frontmatter }, i (file.path)}
+                        <HoardFileView
+                            {file}
+                            {frontmatter}
+                            index={i + hoardviewTaskListBounds.startN}
+                        />
+                    {:else}
+                        no leaf tasks
+                    {/each}
+                </hoardview-task-list>
+            </hoardview-task-list-scroller>
+        </task-list-panel>
+
+        <task-details-panel>
+            {#if store.selectedTask !== null}
+                <TaskDetails task={store.selectedTask} />
+            {:else}
+                no task selected
+            {/if}
+        </task-details-panel>
     </hoardview-file-view>
 {/if}
-
-<!-- <div class="hoard-view-file-view">
-    <ConfigPanel
-        bind:config={config}
-        {tables}
-        {availableColumns}
-        onChange={triggerChange}
-    />
-
-    <div class="view-content">
-        {#if selectedTable}
-            <HoardTable 
-                table={selectedTable} 
-                displayedColumnIds={config.columns.map(c => c.columnId)}
-                displayedRows={processedRows}
-            />
-        {:else}
-            <div class="empty-state">
-                Select a data source to begin
-            </div>
-        {/if}
-    </div>
-</div> -->
 
 <style lang="scss">
 hoardview-file-view {
     display: flex;
+    gap: 0.5em;
+    align-items: stretch;
+
+    height: 100%;
+
+    > * {
+        flex-basis: 0;
+        flex-grow: 1;
+    }
+}
+
+task-list-panel,
+task-details-panel {
+    display: flex;
     flex-direction: column;
     gap: 0.5em;
-
-    min-height: 100%;
 }
 
 hoardview-task-list-scroller {
+    flex-grow: 1;
+    
     display: block;
 
     width: 100%;
-    height: 30em;
     overflow-x: hidden;
     overflow-y: auto;
 }
