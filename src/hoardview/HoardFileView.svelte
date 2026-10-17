@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Keymap, type FrontMatterCache, type TFile } from "obsidian";
 import { HoardViewStore } from "./HoardViewStore.svelte";
+import TaskClock from "../lib/datahoard/TaskClock.svelte";
 
 let {
     file,
@@ -31,7 +32,7 @@ const showHover = (event: MouseEvent | FocusEvent) => {
         Open
     </button>
 
-    <hoard-file-id>{frontmatter["ID"]}</hoard-file-id>
+    <hoard-file-id title={frontmatter["ID"]}>{frontmatter["ID"]}</hoard-file-id>
 
     <a
         href={file.path}
@@ -48,6 +49,7 @@ const showHover = (event: MouseEvent | FocusEvent) => {
     >
         {file.name}
     </a>
+    <TaskClock compact taskId={store.taskId(file)} label={file.basename} onToggle={() => store.toggleClock(file)} />
 
 
     <!-- {#each propertyOrder as propertyName}
@@ -59,22 +61,36 @@ const showHover = (event: MouseEvent | FocusEvent) => {
 hoard-file {
     display: flex;
     flex-direction: row;
+    align-items: center;
+    gap: 0.25rem;
+
     position: absolute;
     top: calc(2em * var(--n-entry));
+    height: 2em;
+    width: 100%;
 
     --n-entry: 0;
 
     > hoard-file-id {
+        flex: 0 0 5em;
+
         display: block;
         width: 5em;
+        overflow: hidden;
+
+        text-overflow: ellipsis;
     }
 
     > a {
+        flex: 1;
+
         display: block;
+        min-width: 0;
         width: 10em;
 
-        overflow-x: auto;
+        overflow: hidden;
         
+        text-overflow: ellipsis;
         white-space: nowrap;
     }
 }

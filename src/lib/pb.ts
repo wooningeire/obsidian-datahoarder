@@ -1,6 +1,11 @@
-import { PUBLIC__POCKETBASE_API } from "$env/static/public";
+export const DEFAULT_POCKETBASE_API = "http://127.0.0.1:8090/api";
 
-const BASE = PUBLIC__POCKETBASE_API.replace(/\/+$/, "");
+let base = DEFAULT_POCKETBASE_API;
+
+export const configurePocketBase = (apiUrl: string): void => {
+    const url = new URL(apiUrl);
+    base = url.href.replace(/\/+$/, "");
+};
 
 export type PbListResult<T> = {
 	page: number,
@@ -48,14 +53,44 @@ export type TimePeriod = PbRecord & {
 };
 
 const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
-	const res = await fetch(`${BASE}${path}`, init);
-	if (!res.ok) throw new Error(`PB ${res.status}: ${await res.text()}`);
+    let res: Response;
+    try {
+        res = await fetch(`${base}${path}`, init);
+    } catch {
+        throw new Error("failed to reach PocketBase server");
+    }
+
+	if (!res.ok) {
+		throw new Error(`PB ${res.status}: ${await res.text()}`);
+	}
+	if (res.status === 204) {
+		return undefined as T; // TODO is there a better way to do this
+	}
+
 	return res.json();
 };
 
 export const list = <T extends PbRecord>(collection: string, params: Record<string, string> = {}): Promise<PbListResult<T>> => {
 	const query = new URLSearchParams({ perPage: "200", ...params }).toString();
 	return request(`/collections/${collection}/records?${query}`);
+};
+
+export const listAll = async <T extends PbRecord>(
+    collection: string,
+    params: Record<string, string> = {},
+): Promise<T[]> => {
+    const records: T[] = [];
+    let nPage = 1;
+    let nPages = 1;
+
+    do {
+        const result = await list<T>(collection, { ...params, page: String(nPage) });
+        records.push(...result.items);
+        nPages = result.totalPages;
+        nPage++;
+    } while (nPage <= nPages);
+
+    return records;
 };
 
 export const create = <T extends PbRecord>(collection: string, data: Record<string, unknown>): Promise<T> => {

@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { HoardViewStore } from "hoardview/HoardViewStore.svelte";
 import type { TFile } from "obsidian";
+import TaskClock from "../../lib/datahoard/TaskClock.svelte";
+import TimeHistory from "./TimeHistory.svelte";
 
 let {
     task,
@@ -24,6 +26,8 @@ const parentTasks = $derived.by(() => {
 </script>
 
 <h2>{task.name}</h2>
+<TaskClock taskId={store.taskId(task)} label={task.basename} onToggle={() => store.toggleClock(task)} />
+<TimeHistory {task} />
 
 <h3>Ancestry</h3>
 

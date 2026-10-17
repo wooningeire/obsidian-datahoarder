@@ -6,6 +6,10 @@ import { HoardEditorView, VIEW_TYPE_EXAMPLE } from './HoardEditorView';
 import { HoardView, VIEW_TYPE_HOARD } from './hoardview/HoardView';
 import { DatahoarderDbOps } from 'dbOps/DatahoarderDbOps';
 import { DatahoardBaseView, MyBasesView } from 'base-view/DatahoardBaseView';
+import { PbStore } from "./lib/datahoard/pbStore.svelte";
+import { configurePocketBase } from "./lib/pb";
+import { FileSystemAdapter, Platform } from "obsidian";
+import { PocketBaseServer } from "./pocketbase/PocketBaseServer";
 
 
 const readDb = async (app: App, sqljs: SqlJsStatic) => {
@@ -31,6 +35,21 @@ export default class DatahoarderPlugin extends Plugin {
 		this.db = db;
 
 		const dbOps = new DatahoarderDbOps(this.app, this.manifest, db);
+        configurePocketBase(this.settings.pocketBaseApiUrl);
+        const adapter = this.app.vault.adapter;
+        const pbServer = this.settings.pocketBaseAutoStart && Platform.isDesktopApp && adapter instanceof FileSystemAdapter
+            ? new PocketBaseServer({
+                apiUrl: this.settings.pocketBaseApiUrl,
+                vaultPath: adapter.getBasePath(),
+                directory: this.settings.pocketBaseDirectory,
+                executablePath: this.settings.pocketBaseExecutablePath,
+                onError: message => { pbStore.error = message; },
+            })
+            : null;
+        const pbStore = new PbStore(async () => { await pbServer?.ensureStarted(); });
+        this.register(() => pbServer?.stop());
+        this.registerInterval(window.setInterval(() => { pbStore.now = Date.now(); }, 1000));
+        if (pbServer) void pbStore.run(() => pbStore.loadAll());
 
 		this.registerView(
 			VIEW_TYPE_EXAMPLE,
@@ -39,7 +58,7 @@ export default class DatahoarderPlugin extends Plugin {
 
 		this.registerView(
 			VIEW_TYPE_HOARD,
-			(leaf) => new HoardView(leaf, dbOps),
+			(leaf) => new HoardView(leaf, pbStore),
 		);
 
 		this.registerExtensions(["datahoard", "hoardview"], VIEW_TYPE_HOARD);

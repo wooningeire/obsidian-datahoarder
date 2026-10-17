@@ -39,6 +39,7 @@ export const findLeafTasks = (
     }
 
     return {
+        tasks,
         taskParents,
         taskChildren,
         leafTasks: tasks

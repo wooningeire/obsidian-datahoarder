@@ -1,17 +1,17 @@
 import { TextFileView, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
 import { mount, unmount } from 'svelte';
 import HoardViewFileView from './HoardViewFileView.svelte';
-import type { DatahoarderDbOps } from '../dbOps/DatahoarderDbOps';
+import type { PbStore } from "../lib/datahoard/pbStore.svelte";
 
 export const VIEW_TYPE_HOARD = 'hoard-view';
 
 export class HoardView extends TextFileView {
-    private component: HoardViewFileView | null = null;
+    private component: ReturnType<typeof mount> | null = null;
 
 
     constructor(
         leaf: WorkspaceLeaf,
-        private dbOps: DatahoarderDbOps
+        readonly pbStore: PbStore,
     ) {
         super(leaf);
     }
@@ -25,19 +25,16 @@ export class HoardView extends TextFileView {
     }
 
     async onLoadFile(file: TFile) {
+        if (this.component !== null) {
+            await unmount(this.component);
+        }
+
         const dataFolder = file.parent?.children.find(child => child.name === "Data" && child instanceof TFolder) as TFolder | undefined ?? null;
         const files = dataFolder?.children.filter(file => file instanceof TFile) ?? null;
 
         this.component = mount(HoardViewFileView, {
             target: this.contentEl,
             props: {
-                dbOps: this.dbOps,
-                onChange: (content: string) => {
-                    if (content !== this.data) {
-                        // this.data = content;
-                        this.requestSave();
-                    }
-                },
                 files,
                 view: this,
             },
@@ -46,27 +43,21 @@ export class HoardView extends TextFileView {
 
     async onClose() {
         if (this.component === null) return;
-        unmount(this.component);
+        await unmount(this.component);
+        this.component = null;
     }
 
     // Get the data from the view to save to disk
     getViewData(): string {
-        return this.component ? this.component.getLoadedFileContent() : this.data;
+        return this.data;
     }
 
     // Load data from disk into the view
     setViewData(data: string, clear: boolean): void {
-        if (this.component) {
-            this.component.setLoadedFileContent(data);
-        } else {
-            this.data = data;
-        }
+        this.data = data;
     }
 
     clear(): void {
-        if (this.component) {
-            this.component.setLoadedFileContent("");
-        }
         this.data = "";
     }
 }

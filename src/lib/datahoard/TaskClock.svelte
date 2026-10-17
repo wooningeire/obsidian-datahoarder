@@ -1,48 +1,69 @@
+<!-- #region TODO needs review -->
+
 <script lang="ts">
 import { getPbStore, formatMs } from "./pbStore.svelte";
 
-let { taskId }: { taskId: string } = $props();
+let { taskId, label, onToggle, compact = false }: {
+    taskId?: string,
+    label?: string,
+    onToggle?: () => Promise<void>,
+    compact?: boolean,
+} = $props();
 
 const store = getPbStore();
 
 // Automatically tracks `store.now` because `totalTime` uses it internally
-let totalMs = $derived(store.totalTime(taskId));
+let totalMs = $derived(taskId ? store.totalTime(taskId) : 0);
 
 let activePeriod = $derived(store.timePeriods.find(p => p.task === taskId && !p.end));
 
 // Session duration
 let sessionMs = $derived(activePeriod ? store.now - new Date(activePeriod.start).getTime() : 0);
+const taskLabel = $derived(label ?? store.tasks.find(task => task.id === taskId)?.label ?? "task");
+const buttonLabel = $derived(`${activePeriod ? "Stop" : "Start"} tracking ${taskLabel}`);
 </script>
 
 
 <task-clock>
-    <button onclick={() => store.toggleClock(taskId)}>
-        {store.activeTimePeriod?.task === taskId ? "⏹" : "▶"}
+    <button
+        onclick={() => store.run(onToggle ?? (() => store.toggleClock(taskId!)))}
+        disabled={!store.ready || store.busy || (!taskId && !onToggle)}
+        aria-label={buttonLabel}
+        title={buttonLabel}
+    >
+        {activePeriod ? "⏹" : "▶"}
     </button>
 
-    <span>
+    <span title="Total tracked time">
         {formatMs(totalMs)}
-        {#if sessionMs > 0}
-            <span class="session">(+{formatMs(sessionMs)})</span>
+        {#if !compact}
+            <span class="session" class:inactive={!activePeriod}>(+{formatMs(sessionMs)})</span>
         {/if}
     </span>
 </task-clock>
 
 <style lang="scss">
-    @use "$/styles/fonts";
 
     task-clock {
         display: flex;
         gap: 0.5em;
         align-items: center;
 
-        font-family: fonts.$font-mono;
+        white-space: nowrap;
+        font-family: var(--font-monospace, monospace);
+        font-variant-numeric: tabular-nums;
 	    font-size: 0.85em;
     }
 
     .session {
-        color: #888;
+        color: oklch(0.65 0 0);
         font-size: 0.9em;
-        margin-left: 4px;
+        margin-left: 0.25rem;
+    }
+
+    .inactive {
+        visibility: hidden;
     }
 </style>
+
+<!-- #endregion -->
