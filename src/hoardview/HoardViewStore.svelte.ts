@@ -20,6 +20,24 @@ export class HoardViewStore {
     selectedTask: TFile | null = $state(null);
     taskGraph: ReturnType<typeof findLeafTasks> = $state()!;
 
+    private taskFilesByFile = $derived(new Map(this.taskGraph.tasks.map(task => [task.file, task])));
+    private filesByTaskId = $derived.by(() => {
+        const byTaskId = new Map<string, TFile[]>();
+        for (const file of this.files) {
+            const taskId = this.taskId(file);
+            if (!taskId) continue;
+
+            const files = byTaskId.get(taskId);
+            if (files) {
+                files.push(file);
+            }
+            else {
+                byTaskId.set(taskId, [file]);
+            }
+        }
+        return byTaskId;
+    });
+
     selectedPeriodId: string | null = $state(null);
     get pb() {
         return this.view.pbStore;
@@ -78,7 +96,7 @@ export class HoardViewStore {
     };
 
     taskId = (file: TFile): string | undefined => {
-        const frontmatter = this.taskGraph.tasks.find(task => task.file === file)?.frontmatter;
+        const frontmatter = this.taskFilesByFile.get(file)?.frontmatter;
         const sourceId: unknown = frontmatter?.["Source ID"];
         if (typeof sourceId === "string" && sourceId.trim().startsWith("pocketbase:")) {
             const id = sourceId.trim().slice("pocketbase:".length);
@@ -88,23 +106,26 @@ export class HoardViewStore {
         return typeof linkedId === "string" ? linkedId.trim() || undefined : undefined;
     };
 
-    trackedTask = (file: TFile): Task | undefined => this.pb.tasks.find(task => task.id === this.taskId(file));
+    trackedTask = (file: TFile): Task | undefined => {
+        const taskId = this.taskId(file);
+        return taskId ? this.pb.tasksById.get(taskId) : undefined;
+    };
 
     fileForTask = (taskId: string): TFile | undefined => {
-        return this.files.find(file => this.taskId(file) === taskId);
+        return this.filesByTaskId.get(taskId)?.[0];
     };
 
     labelForTask = (taskId: string): string => {
         const file = this.fileForTask(taskId);
         if (file) return file.basename;
 
-        const task = this.pb.tasks.find(task => task.id === taskId);
+        const task = this.pb.tasksById.get(taskId);
         return task?.label ?? (taskId ? "Missing task" : "Unassigned");
     };
 
     toggleClock = async (file: TFile): Promise<void> => {
         let taskId = this.taskId(file);
-        if (taskId && this.files.filter(candidate => this.taskId(candidate) === taskId).length > 1) {
+        if (taskId && (this.filesByTaskId.get(taskId)?.length ?? 0) > 1) {
             throw new Error("Two notes link to the same PocketBase task. Give each note a unique PocketBase link before tracking time.");
         }
 

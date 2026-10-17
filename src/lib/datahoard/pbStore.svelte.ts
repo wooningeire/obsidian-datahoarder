@@ -11,6 +11,17 @@ export class PbStore {
 	completions = $state<CompletionEnum[]>([]);
 	timePeriods = $state<TimePeriod[]>([]);
 
+    tasksById = $derived(new Map(this.tasks.map(task => [task.id, task])));
+    periodsByTask = $derived.by(() => {
+        const byTask = new Map<string, TimePeriod[]>();
+        for (const period of this.timePeriods) {
+            const periods = byTask.get(period.task);
+            if (periods) periods.push(period);
+            else byTask.set(period.task, [period]);
+        }
+        return byTask;
+    });
+
     activeTimePeriod = $derived(this.timePeriods.find(period => !period.end) ?? null);
     ready = $state(false);
     busy = $state(false);
@@ -63,8 +74,8 @@ export class PbStore {
 	}
 
 	totalTime(taskId: string): number {
-        let total = (this.tasks.find(task => task.id === taskId)?.n_extra_hours ?? 0) * 3600000;
-		for (const p of this.timePeriods.filter(tp => tp.task === taskId)) {
+        let total = (this.tasksById.get(taskId)?.n_extra_hours ?? 0) * 3600000;
+		for (const p of this.periodsByTask.get(taskId) ?? []) {
 			const start = new Date(p.start).getTime();
 			const end = p.end ? new Date(p.end).getTime() : this.now;
             total += Math.max(0, end - start);
@@ -97,7 +108,7 @@ export class PbStore {
     async toggleClock(taskId: string) {
         // Refresh before changing timers so a timer started by another client is stopped too.
         await this.loadAll();
-        if (!this.tasks.some(task => task.id === taskId)) {
+        if (!this.tasksById.has(taskId)) {
             throw new Error("The linked PocketBase task no longer exists.");
         }
         const wasActiveTask = this.activeTimePeriod?.task;
@@ -126,50 +137,49 @@ export class PbStore {
 
 	}
 
+    private applyTaskPatch = (taskId: string, patch: Partial<Task>): void => {
+        const index = this.tasks.findIndex(task => task.id === taskId);
+        const task = this.tasks[index];
+        if (task) this.tasks[index] = { ...task, ...patch };
+    };
+
 	async saveEdit(task: Task, newLabel: string) {
 		if (newLabel.trim() && newLabel !== task.label) {
 			const updated = await update<Task>("tasks", task.id, { label: newLabel.trim() });
-			const idx = this.tasks.findIndex(t => t.id === task.id);
-			if (idx >= 0) this.tasks[idx] = { ...this.tasks[idx]!, label: updated.label };
+            this.applyTaskPatch(task.id, { label: updated.label });
 		}
 	}
 
 	async setArchive(taskId: string, archive: boolean) {
 		const updated = await update<Task>("tasks", taskId, { archive });
-		const idx = this.tasks.findIndex(t => t.id === taskId);
-		if (idx >= 0) this.tasks[idx] = { ...this.tasks[idx]!, archive: updated.archive };
+        this.applyTaskPatch(taskId, { archive: updated.archive });
 	}
 
 	async setPriority(taskId: string, priorityId: string) {
 		const updated = await update<Task>("tasks", taskId, { priority: priorityId || "" });
-		const idx = this.tasks.findIndex(t => t.id === taskId);
-		if (idx >= 0) this.tasks[idx] = { ...this.tasks[idx]!, priority: updated.priority };
+        this.applyTaskPatch(taskId, { priority: updated.priority });
 	}
 
 	async setCompletion(taskId: string, completionId: string) {
 		const updated = await update<Task>("tasks", taskId, { completion: completionId || "" });
-		const idx = this.tasks.findIndex(t => t.id === taskId);
-		if (idx >= 0) this.tasks[idx] = { ...this.tasks[idx]!, completion: updated.completion };
+        this.applyTaskPatch(taskId, { completion: updated.completion });
 	}
 
 	async setParentTask(taskId: string, parentId: string) {
 		const updated = await update<Task>("tasks", taskId, { parent_task: parentId || "" });
-		const idx = this.tasks.findIndex(t => t.id === taskId);
-		if (idx >= 0) this.tasks[idx] = { ...this.tasks[idx]!, parent_task: updated.parent_task };
+        this.applyTaskPatch(taskId, { parent_task: updated.parent_task });
 	}
 
 	async setTargetDue(taskId: string, dateStr: string) {
 		const iso = dateStr ? new Date(dateStr).toISOString() : "";
 		const updated = await update<Task>("tasks", taskId, { target_due: iso });
-		const idx = this.tasks.findIndex(t => t.id === taskId);
-		if (idx >= 0) this.tasks[idx] = { ...this.tasks[idx]!, target_due: updated.target_due };
+        this.applyTaskPatch(taskId, { target_due: updated.target_due });
 	}
 
 	async setHardDue(taskId: string, dateStr: string) {
 		const iso = dateStr ? new Date(dateStr).toISOString() : "";
 		const updated = await update<Task>("tasks", taskId, { hard_due: iso });
-		const idx = this.tasks.findIndex(t => t.id === taskId);
-		if (idx >= 0) this.tasks[idx] = { ...this.tasks[idx]!, hard_due: updated.hard_due };
+        this.applyTaskPatch(taskId, { hard_due: updated.hard_due });
 	}
 }
 

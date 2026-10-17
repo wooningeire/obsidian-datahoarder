@@ -8,7 +8,7 @@
     let { task }: { task: TFile } = $props();
     const store = HoardViewStore.use();
     const trackedTask = $derived(store.trackedTask(task));
-    const periods = $derived(store.pb.timePeriods.filter(period => period.task === trackedTask?.id));
+    const periods = $derived(trackedTask ? store.pb.periodsByTask.get(trackedTask.id) ?? [] : []);
     const additionalTime = $derived((trackedTask?.n_extra_hours ?? 0) * 3600000);
 </script>
 

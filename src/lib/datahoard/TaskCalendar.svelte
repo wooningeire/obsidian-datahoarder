@@ -92,7 +92,7 @@
 			.map((p) => {
 				const startMs = Math.max(new Date(p.start).getTime(), dayStartMs);
 				const endMs = Math.min(p.end ? new Date(p.end).getTime() : store.now, dayEndMs);
-				const task = store.tasks.find((t) => t.id === p.task);
+                const task = store.tasksById.get(p.task);
 				return {
                     ...p,
                     topPct: ((startMs - dayStartMs) / dayLength) * 100,

@@ -15,11 +15,13 @@ const store = getPbStore();
 // Automatically tracks `store.now` because `totalTime` uses it internally
 let totalMs = $derived(taskId ? store.totalTime(taskId) : 0);
 
-let activePeriod = $derived(store.timePeriods.find(p => p.task === taskId && !p.end));
+let activePeriod = $derived(
+    store.activeTimePeriod?.task === taskId ? store.activeTimePeriod : null,
+);
 
 // Session duration
 let sessionMs = $derived(activePeriod ? store.now - new Date(activePeriod.start).getTime() : 0);
-const taskLabel = $derived(label ?? store.tasks.find(task => task.id === taskId)?.label ?? "task");
+const taskLabel = $derived(label ?? store.tasksById.get(taskId ?? "")?.label ?? "task");
 const buttonLabel = $derived(`${activePeriod ? "Stop" : "Start"} tracking ${taskLabel}`);
 </script>
 

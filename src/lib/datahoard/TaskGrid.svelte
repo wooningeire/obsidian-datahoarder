@@ -15,7 +15,7 @@
             
             if (!t.parent_task) return true;
             
-            const parent = store.tasks.find(p => p.id === t.parent_task);
+            const parent = store.tasksById.get(t.parent_task);
             return !parent || !filterSort.isVisible(parent);
         });
 

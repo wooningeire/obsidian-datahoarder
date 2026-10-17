@@ -5,7 +5,7 @@
 
     const store = getPbStore();
     const activePeriod = $derived(store.activeTimePeriod);
-    const taskLabel = $derived(store.tasks.find(task => task.id === activePeriod?.task)?.label ?? "Unassigned");
+    const taskLabel = $derived(store.tasksById.get(activePeriod?.task ?? "")?.label ?? "Unassigned");
     const title = $derived(store.error || taskLabel);
     const actionLabel = $derived(store.error ? "Retry" : activePeriod ? "Stop timer" : "Refresh");
 
