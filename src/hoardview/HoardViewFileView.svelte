@@ -107,7 +107,7 @@ hoardview-container {
 
 hoardview-file-view {
     display: grid;
-    grid-template-columns: minmax(19rem, 1fr) minmax(0, 2fr);
+    grid-template-columns: 1fr 1fr;
     gap: 0.5em;
     align-items: stretch;
 
@@ -167,7 +167,7 @@ task-details-panel {
 @container (max-width: 48rem) {
     hoardview-file-view {
         grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: minmax(8rem, 1fr) minmax(25rem, 3fr);
+        grid-template-rows: 1fr 1fr;
         overflow-y: auto;
     }
 }
