@@ -66,11 +66,11 @@ export class PbStore {
 	}
 
 	rootTasks(): Task[] {
-		return this.tasks.filter(t => !t.parent_task);
+		return this.tasks.filter(t => t.parent_tasks.length === 0);
 	}
 
 	childTasks(parentId: string): Task[] {
-		return this.tasks.filter(t => t.parent_task === parentId);
+		return this.tasks.filter(t => t.parent_tasks.includes(parentId));
 	}
 
 	totalTime(taskId: string): number {
@@ -123,12 +123,15 @@ export class PbStore {
 		this.timePeriods = [period, ...this.timePeriods];
 	}
 
-	async addTask(label: string) {
-		if (!label.trim()) return;
-		const task = await create<Task>("tasks", { label: label.trim() });
-		this.tasks = [task, ...this.tasks];
+    addTask = async (label: string): Promise<Task> => {
+        const trimmedLabel = label.trim();
+        if (!trimmedLabel) throw new Error("Enter a task name.");
+
+        await this.beforeLoad();
+        const task = await create<Task>("tasks", { label: trimmedLabel });
+        this.tasks = [task, ...this.tasks];
         return task;
-	}
+    };
 
 	async deleteTask(id: string) {
 		await remove("tasks", id);
@@ -165,9 +168,9 @@ export class PbStore {
         this.applyTaskPatch(taskId, { completion: updated.completion });
 	}
 
-	async setParentTask(taskId: string, parentId: string) {
-		const updated = await update<Task>("tasks", taskId, { parent_task: parentId || "" });
-        this.applyTaskPatch(taskId, { parent_task: updated.parent_task });
+	async setParentTasks(taskId: string, parentIds: string[]) {
+		const updated = await update<Task>("tasks", taskId, { parent_tasks: parentIds });
+        this.applyTaskPatch(taskId, { parent_tasks: updated.parent_tasks });
 	}
 
 	async setTargetDue(taskId: string, dateStr: string) {

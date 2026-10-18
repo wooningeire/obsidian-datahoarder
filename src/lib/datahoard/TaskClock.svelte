@@ -3,17 +3,15 @@
 <script lang="ts">
 import { getPbStore, formatMs } from "./pbStore.svelte";
 
-let { taskId, label, onToggle, compact = false }: {
-    taskId?: string,
-    label?: string,
-    onToggle?: () => Promise<void>,
+let { taskId, compact = false }: {
+    taskId: string,
     compact?: boolean,
 } = $props();
 
 const store = getPbStore();
 
 // Automatically tracks `store.now` because `totalTime` uses it internally
-let totalMs = $derived(taskId ? store.totalTime(taskId) : 0);
+let totalMs = $derived(store.totalTime(taskId));
 
 let activePeriod = $derived(
     store.activeTimePeriod?.task === taskId ? store.activeTimePeriod : null,
@@ -21,15 +19,15 @@ let activePeriod = $derived(
 
 // Session duration
 let sessionMs = $derived(activePeriod ? store.now - new Date(activePeriod.start).getTime() : 0);
-const taskLabel = $derived(label ?? store.tasksById.get(taskId ?? "")?.label ?? "task");
+const taskLabel = $derived(store.tasksById.get(taskId)?.label || "task");
 const buttonLabel = $derived(`${activePeriod ? "Stop" : "Start"} tracking ${taskLabel}`);
 </script>
 
 
 <task-clock>
     <button
-        onclick={() => store.run(onToggle ?? (() => store.toggleClock(taskId!)))}
-        disabled={!store.ready || store.busy || (!taskId && !onToggle)}
+        onclick={() => store.run(() => store.toggleClock(taskId))}
+        disabled={!store.ready || store.busy || !store.tasksById.has(taskId)}
         aria-label={buttonLabel}
         title={buttonLabel}
     >

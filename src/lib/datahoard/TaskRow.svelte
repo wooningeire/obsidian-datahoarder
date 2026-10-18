@@ -17,6 +17,10 @@ let {
 const store = getPbStore();
 let editingTaskId = $state<string | null>(null);
 let editingLabel = $state("");
+let editingParents = $state(false);
+const parentChoices = $derived(editingParents
+    ? store.tasks.filter(parent => parent.id !== task.id)
+    : task.parent_tasks.map(id => store.tasksById.get(id)).filter((parent): parent is Task => parent !== undefined));
 
 const startEdit = () => {
     editingTaskId = task.id;
@@ -75,11 +79,15 @@ const saveEdit = () => {
     </select>
 
     <select
-        value={task.parent_task}
-        onchange={(e) => store.setParentTask(task.id, (e.target as HTMLSelectElement).value)}
+        multiple
+        size={2}
+        aria-label="Parent tasks"
+        value={task.parent_tasks}
+        onfocus={() => editingParents = true}
+        onblur={() => editingParents = false}
+        onchange={(e) => store.setParentTasks(task.id, Array.from((e.target as HTMLSelectElement).selectedOptions, option => option.value))}
     >
-        <option value="">[no parent]</option>
-        {#each store.tasks.filter((t) => t.id !== task.id) as p (p.id)}
+        {#each parentChoices as p (p.id)}
             <option value={p.id}>{p.label || p.id}</option>
         {/each}
     </select>

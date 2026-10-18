@@ -5,9 +5,7 @@
     import { formatMs } from "../../lib/datahoard/pbStore.svelte";
 
     const store = HoardViewStore.use();
-    const period = $derived(store.pb.timePeriods.find(candidate =>
-        candidate.id === store.selectedPeriodId,
-    ));
+    const period = $derived(store.selectedPeriod);
 </script>
 
 {#if period}

@@ -28,8 +28,8 @@
 		// Get all tasks that match the current filter (active vs archived)
 		const visibleTasks = store.tasks.filter(filterSort.isVisible);
 		
-		// Find leaf nodes (tasks that are not a parent_task to any other active task)
-		const parentIds = new Set(visibleTasks.map(t => t.parent_task).filter(Boolean));
+		// A task can belong to several parents.
+		const parentIds = new Set(visibleTasks.flatMap(t => t.parent_tasks));
 		return visibleTasks.filter(t => !parentIds.has(t.id));
 	});
 

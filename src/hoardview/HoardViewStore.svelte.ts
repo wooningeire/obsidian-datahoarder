@@ -1,82 +1,45 @@
-import type { HoardView } from "hoardview/HoardView";
-import type { TFile } from "obsidian";
 import { getContext, onMount, setContext } from "svelte";
-import { findLeafTasks } from "./leafTasks";
+import type { PaneType } from "obsidian";
+import type { HoardView } from "./HoardView";
 import { PB_CONTEXT_KEY } from "../lib/datahoard/pbStore.svelte";
-import type { Task, TimePeriod } from "../lib/pb";
+import type { TimePeriod } from "../lib/pb";
+import { createTaskGraph } from "./taskGraph";
 
 
 const contextKey = Symbol("datahoarder store context");
 
 
-type HoardViewOptions = {
-    view: HoardView,
-    files: TFile[] | null,
-};
-
 export class HoardViewStore {
     readonly view: HoardView;
-    readonly files: TFile[];
-    selectedTask: TFile | null = $state(null);
-    taskGraph: ReturnType<typeof findLeafTasks> = $state()!;
 
-    private taskFilesByFile = $derived(new Map(this.taskGraph.tasks.map(task => [task.file, task])));
-    private filesByTaskId = $derived.by(() => {
-        const byTaskId = new Map<string, TFile[]>();
-        for (const file of this.files) {
-            const taskId = this.taskId(file);
-            if (!taskId) continue;
+    selectedTaskId = $state<string | null>(null);
+    selectedPeriodId = $state<string | null>(null);
 
-            const files = byTaskId.get(taskId);
-            if (files) {
-                files.push(file);
-            }
-            else {
-                byTaskId.set(taskId, [file]);
-            }
-        }
-        return byTaskId;
-    });
+    taskGraph = $derived(createTaskGraph(this.pb.tasks, this.pb.completions));
+    selectedTask = $derived(this.pb.tasksById.get(this.selectedTaskId ?? "") ?? null);
+    selectedPeriod = $derived(this.pb.timePeriods.find(period => (
+        period.id === this.selectedPeriodId
+    )) ?? null);
 
-    selectedPeriodId: string | null = $state(null);
     get pb() {
         return this.view.pbStore;
     }
 
-    private constructor({
-        view,
-        files,
-    }: HoardViewOptions) {
-        this.view = view;
-        this.files = files ?? [];
 
-        this.taskGraph = this.computeTaskGraph();
+    constructor(view: HoardView) {
+        this.view = view;
     }
 
-    static mount(options: HoardViewOptions) {
-        const store = new HoardViewStore(options);
 
-        onMount(() => {
-            const metadataCache = store.view.app.metadataCache;
-            const changedRef = metadataCache.on("changed", file => {
-                store.taskGraph = store.computeTaskGraph();
-            });
-            const resolvedRef = metadataCache.on("resolved", () => {
-                store.taskGraph = store.computeTaskGraph();
-            });
-
-            if (!store.pb.ready) {
-                store.pb.run(() => store.pb.loadAll());
-            }
-
-            return () => {
-                metadataCache.offref(changedRef);
-                metadataCache.offref(resolvedRef);
-            };
-        });
+    static mount(view: HoardView) {
+        const store = new HoardViewStore(view);
 
         setContext(contextKey, store);
         setContext(PB_CONTEXT_KEY, store.pb);
+
+        onMount(() => {
+            void store.pb.run(() => store.pb.loadAll());
+        });
 
         return store;
     }
@@ -85,69 +48,32 @@ export class HoardViewStore {
         return getContext<HoardViewStore>(contextKey);
     }
 
-    private computeTaskGraph() {
-        return findLeafTasks(this.files, this.view.app.metadataCache);
-    }
 
-    //#region TODO needs review
+    selectTask = (taskId: string): void => {
+        this.selectedTaskId = this.pb.tasksById.has(taskId) ? taskId : null;
+        this.selectedPeriodId = null;
+    };
+
     selectPeriod = (period: TimePeriod): void => {
+        this.selectedTaskId = this.pb.tasksById.has(period.task) ? period.task : null;
         this.selectedPeriodId = period.id;
-        this.selectedTask = this.fileForTask(period.task) ?? null;
     };
 
-    taskId = (file: TFile): string | undefined => {
-        const frontmatter = this.taskFilesByFile.get(file)?.frontmatter;
-        const sourceId: unknown = frontmatter?.["Source ID"];
-        if (typeof sourceId === "string" && sourceId.trim().startsWith("pocketbase:")) {
-            const id = sourceId.trim().slice("pocketbase:".length);
-            if (id) return id;
-        }
-        const linkedId: unknown = frontmatter?.["PocketBase ID"];
-        return typeof linkedId === "string" ? linkedId.trim() || undefined : undefined;
-    };
-
-    trackedTask = (file: TFile): Task | undefined => {
-        const taskId = this.taskId(file);
-        return taskId ? this.pb.tasksById.get(taskId) : undefined;
-    };
-
-    fileForTask = (taskId: string): TFile | undefined => {
-        return this.filesByTaskId.get(taskId)?.[0];
+    createTask = async (label: string): Promise<void> => {
+        const task = await this.pb.addTask(label);
+        this.selectTask(task.id);
     };
 
     labelForTask = (taskId: string): string => {
-        const file = this.fileForTask(taskId);
-        if (file) return file.basename;
+        return this.pb.tasksById.get(taskId)?.label || (taskId ? "Missing task" : "Unassigned");
+    };
 
+    openNote = async (taskId: string, newLeaf: PaneType | boolean): Promise<void> => {
         const task = this.pb.tasksById.get(taskId);
-        return task?.label ?? (taskId ? "Missing task" : "Unassigned");
-    };
+        const file = task?.note_path
+            ? this.view.app.vault.getFileByPath(task.note_path)
+            : null;
 
-    toggleClock = async (file: TFile): Promise<void> => {
-        let taskId = this.taskId(file);
-        if (taskId && (this.filesByTaskId.get(taskId)?.length ?? 0) > 1) {
-            throw new Error("Two notes link to the same PocketBase task. Give each note a unique PocketBase link before tracking time.");
-        }
-
-        if (!taskId) {
-            const task = await this.pb.addTask(file.basename);
-            if (!task) return;
-            try {
-                await this.view.app.fileManager.processFrontMatter(file, frontmatter => {
-                    if (frontmatter["Source ID"]) frontmatter["PocketBase ID"] = task.id;
-                    else frontmatter["Source ID"] = `pocketbase:${task.id}`;
-                });
-            } catch (error) {
-                try {
-                    await this.pb.deleteTask(task.id);
-                } catch {
-                    throw new Error(`Could not link the note or remove the new PocketBase task. Add PocketBase ID ${task.id} to the note before retrying.`);
-                }
-                throw error;
-            }
-            taskId = task.id;
-        }
-        await this.pb.toggleClock(taskId);
+        if (file) await this.view.app.workspace.getLeaf(newLeaf).openFile(file);
     };
-    //#endregion
 }

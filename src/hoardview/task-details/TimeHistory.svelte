@@ -1,15 +1,16 @@
 <!-- #region TODO needs review -->
 
 <script lang="ts">
-    import type { TFile } from "obsidian";
-    import { HoardViewStore } from "../HoardViewStore.svelte";
-    import { formatMs } from "../../lib/datahoard/pbStore.svelte";
+import { formatMs, getPbStore } from "../../lib/datahoard/pbStore.svelte";
 
-    let { task }: { task: TFile } = $props();
-    const store = HoardViewStore.use();
-    const trackedTask = $derived(store.trackedTask(task));
-    const periods = $derived(trackedTask ? store.pb.periodsByTask.get(trackedTask.id) ?? [] : []);
-    const additionalTime = $derived((trackedTask?.n_extra_hours ?? 0) * 3600000);
+let {
+    taskId,
+}: {
+    taskId: string,
+} = $props();
+const store = getPbStore();
+const periods = $derived(store.periodsByTask.get(taskId) ?? []);
+const additionalTime = $derived((store.tasksById.get(taskId)?.n_extra_hours ?? 0) * 3_600_000);
 </script>
 
 <section aria-label="Time history" class="history">
@@ -21,10 +22,10 @@
         {#each periods as period (period.id)}
             <li>
                 <span>{new Date(period.start).toLocaleString()} → {period.end ? new Date(period.end).toLocaleString() : "Running"}</span>
-                <strong>{formatMs((period.end ? Date.parse(period.end) : store.pb.now) - Date.parse(period.start))}</strong>
+                <strong>{formatMs((period.end ? Date.parse(period.end) : store.now) - Date.parse(period.start))}</strong>
             </li>
         {:else}
-            <li>No time recorded.</li>
+            <li>no time recorded</li>
         {/each}
     </ol>
 </section>

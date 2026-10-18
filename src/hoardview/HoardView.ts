@@ -1,9 +1,9 @@
-import { TextFileView, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
-import { mount, unmount } from 'svelte';
-import HoardViewFileView from './HoardViewFileView.svelte';
+import { TextFileView, type TFile, type WorkspaceLeaf } from "obsidian";
+import { mount, unmount } from "svelte";
+import HoardViewFileView from "./HoardViewFileView.svelte";
 import type { PbStore } from "../lib/datahoard/pbStore.svelte";
 
-export const VIEW_TYPE_HOARD = 'hoard-view';
+export const VIEW_TYPE_HOARD = "hoard-view";
 
 export class HoardView extends TextFileView {
     private component: ReturnType<typeof mount> | null = null;
@@ -21,7 +21,7 @@ export class HoardView extends TextFileView {
     }
 
     getDisplayText() {
-        return this.file ? this.file.basename : 'Hoard View';
+        return this.file ? this.file.basename : "Hoard View";
     }
 
     async onLoadFile(file: TFile) {
@@ -29,13 +29,9 @@ export class HoardView extends TextFileView {
             await unmount(this.component);
         }
 
-        const dataFolder = file.parent?.children.find(child => child.name === "Data" && child instanceof TFolder) as TFolder | undefined ?? null;
-        const files = dataFolder?.children.filter(file => file instanceof TFile) ?? null;
-
         this.component = mount(HoardViewFileView, {
             target: this.contentEl,
             props: {
-                files,
                 view: this,
             },
         });

@@ -1,26 +1,25 @@
 <script lang="ts">
-    import type { Task } from "$lib/pb";
-    import { getPbStore } from "./pbStore.svelte";
-    import TaskRow from "./TaskRow.svelte";
+import { getPbStore } from "./pbStore.svelte";
+import TaskRow from "./TaskRow.svelte";
 
-    import { TaskFilterSort } from "./taskFilterSort.svelte";
-    import TaskControls from "./TaskControls.svelte";
+import { TaskFilterSort } from "./taskFilterSort.svelte";
+import TaskControls from "./TaskControls.svelte";
 
-    const store = getPbStore();
-    const filterSort = new TaskFilterSort();
+const store = getPbStore();
+const filterSort = new TaskFilterSort();
 
-    let filteredTasks = $derived.by(() => {
-        const visibleRoots = store.tasks.filter(t => {
-            if (!filterSort.isVisible(t)) return false;
-            
-            if (!t.parent_task) return true;
-            
-            const parent = store.tasksById.get(t.parent_task);
-            return !parent || !filterSort.isVisible(parent);
+let filteredTasks = $derived.by(() => {
+    const visibleRoots = store.tasks.filter(task => {
+        if (!filterSort.isVisible(task)) return false;
+        
+        return !task.parent_tasks.some(parentId => {
+            const parent = store.tasksById.get(parentId);
+            return parent && filterSort.isVisible(parent);
         });
-
-        return filterSort.processTasks(visibleRoots);
     });
+
+    return filterSort.processTasks(visibleRoots);
+});
 </script>
 
 <div class="task-grid-container">
@@ -33,7 +32,7 @@
         <task-grid-header>Task</task-grid-header>
         <task-grid-header>Priority</task-grid-header>
         <task-grid-header>Completion</task-grid-header>
-        <task-grid-header>Parent Task</task-grid-header>
+        <task-grid-header>Parent tasks</task-grid-header>
         <task-grid-header>Target Due</task-grid-header>
         <task-grid-header>Hard Due</task-grid-header>
         <task-grid-header>Time</task-grid-header>
