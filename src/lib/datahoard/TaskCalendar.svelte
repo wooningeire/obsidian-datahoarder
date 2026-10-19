@@ -2,9 +2,11 @@
 
 <script lang="ts">
 	import { getPbStore } from "./pbStore.svelte";
-    import type { TimePeriod } from "../pb";
+    import type { Task, TimePeriod } from "../pb";
 
-    let { onSelectPeriod }: {
+    let { tasks, timePeriods, onSelectPeriod }: {
+        tasks: Task[],
+        timePeriods: TimePeriod[],
         onSelectPeriod?: (period: TimePeriod) => void,
     } = $props();
 
@@ -49,7 +51,7 @@
     const getGroupedTasksForDay = (day: Date) => {
 		const startMs = day.getTime();
         const endMs = dayEnd(day);
-		const tasksForDay = store.tasks.filter((t) => {
+		const tasksForDay = tasks.filter((t) => {
 			if (!t.hard_due) return false;
 			const dueMs = new Date(t.hard_due).getTime();
 			return dueMs >= startMs && dueMs < endMs;
@@ -83,7 +85,7 @@
         const dayEndMs = dayEnd(day);
         const dayLength = dayEndMs - dayStartMs;
 
-		return store.timePeriods
+		return timePeriods
 			.filter((p) => {
 				const startMs = new Date(p.start).getTime();
 				const endMs = p.end ? new Date(p.end).getTime() : store.now;

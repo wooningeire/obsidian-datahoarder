@@ -34,7 +34,7 @@ let hoardviewTaskListBounds = $derived.by(() => {
 
     const rowHeight = 2 * fontSize;
 
-    const nTasks = store.taskGraph.leafTasks.length;
+    const nTasks = store.visibleTasks.length;
     const startN = Math.max(
         0,
         Math.min(
@@ -49,27 +49,24 @@ let hoardviewTaskListBounds = $derived.by(() => {
 });
 
 
-enum Tab {
-    List,
-    Calendar,
-}
-let tab = $state(Tab.List);
 </script>
 
 <hoardview-container>
     <hoardview-file-view>
         <hoardview-tasks>
             <hoardview-file-tabs>
-                <button
-                    onclick={() => tab = Tab.List}
-                >List</button>
-
-                <button
-                    onclick={() => tab = Tab.Calendar}
-                >Calendar</button>
+                {#each store.collection.views as view, index}
+                    <button
+                        onclick={() => {
+                            store.viewIndex = index;
+                            hoardviewTaskListScrollTop = 0;
+                            if (hoardviewTaskListEl) hoardviewTaskListEl.scrollTop = 0;
+                        }}
+                    >{view.name}</button>
+                {/each}
             </hoardview-file-tabs>
 
-            {#if tab === Tab.List}
+            {#if store.collectionView.type !== "calendar"}
                 <task-list-panel>
                     <TaskCreateBar />
 
@@ -81,9 +78,9 @@ let tab = $state(Tab.List);
                         bind:this={hoardviewTaskListEl}
                     >
                         <hoardview-task-list
-                            style:--n-entries={store.taskGraph.leafTasks.length}
+                            style:--n-entries={store.visibleTasks.length}
                         >
-                            {#each store.taskGraph.leafTasks.slice(hoardviewTaskListBounds.startN, hoardviewTaskListBounds.endN) as task, i (task.id)}
+                            {#each store.visibleTasks.slice(hoardviewTaskListBounds.startN, hoardviewTaskListBounds.endN) as task, i (task.id)}
                                 <HoardTaskView
                                     {task}
                                     index={i + hoardviewTaskListBounds.startN}
@@ -94,10 +91,14 @@ let tab = $state(Tab.List);
                         </hoardview-task-list>
                     </hoardview-task-list-scroller>
                 </task-list-panel>
-            {:else if tab === Tab.Calendar}
+            {:else}
                 <calendar-panel>
                     <TimeTrackingStatus />
-                    <TaskCalendar onSelectPeriod={store.selectPeriod} />
+                    <TaskCalendar
+                        tasks={store.visibleTasks}
+                        timePeriods={store.visiblePeriods}
+                        onSelectPeriod={store.selectPeriod}
+                    />
                 </calendar-panel>
             {/if}
         </hoardview-tasks>

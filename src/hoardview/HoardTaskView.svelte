@@ -19,7 +19,13 @@ const store = HoardViewStore.use();
         onclick={() => store.selectTask(task.id)}
         title={task.label}
     >
-        {task.label || "(untitled)"}
+        {#if store.collectionView.columns?.length}
+            {#each store.collectionView.columns as column}
+                {store.valueForTask(task, column)}{" "}
+            {/each}
+        {:else}
+            {task.label || "(untitled)"}
+        {/if}
     </button>
     <TaskNoteLink {task} />
     <TaskClock compact taskId={task.id} />

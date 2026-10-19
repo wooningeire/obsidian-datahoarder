@@ -32,7 +32,7 @@ export class PbStore {
 	async loadAll() {
         await this.beforeLoad();
         const [tasks, priorities, completions, periods] = await Promise.all([
-            listAll<Task>("tasks", { expand: "priority,completion", sort: "-created,id" }),
+            listAll<Task>("tasks", { expand: "priority,completion,categories,term", sort: "-created,id" }),
             listAll<PriorityEnum>("priority_enum", { sort: "value,id" }),
             listAll<CompletionEnum>("completion_enum", { sort: "id" }),
             listAll<TimePeriod>("task_time_periods", { sort: "-start,id" }),

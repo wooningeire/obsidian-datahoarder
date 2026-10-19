@@ -2,8 +2,10 @@ import { getContext, onMount, setContext } from "svelte";
 import type { PaneType } from "obsidian";
 import type { HoardView } from "./HoardView";
 import { PB_CONTEXT_KEY } from "../lib/datahoard/pbStore.svelte";
-import type { TimePeriod } from "../lib/pb";
+import type { Task, TimePeriod } from "../lib/pb";
 import { createTaskGraph } from "./taskGraph";
+import collection from "../collections/Base.collection";
+import { selectTasks, taskValue } from "../collections/tasks";
 
 
 const contextKey = Symbol("datahoarder store context");
@@ -11,11 +13,25 @@ const contextKey = Symbol("datahoarder store context");
 
 export class HoardViewStore {
     readonly view: HoardView;
+    readonly collection = collection;
 
+    viewIndex = $state(0);
     selectedTaskId = $state<string | null>(null);
     selectedPeriodId = $state<string | null>(null);
 
     taskGraph = $derived(createTaskGraph(this.pb.tasks, this.pb.completions));
+    collectionView = $derived(this.collection.views[this.viewIndex]!);
+    visibleTasks = $derived(selectTasks(
+        this.collectionView.leafOnly ? this.taskGraph.leafTasks : this.pb.tasks,
+        this.collectionView,
+        this.pb,
+    ));
+    visiblePeriods = $derived.by(() => {
+        const ids = new Set(this.visibleTasks.map(task => task.id));
+        return this.pb.timePeriods.filter(period => (
+            !this.pb.tasksById.has(period.task) || ids.has(period.task)
+        ));
+    });
     selectedTask = $derived(this.pb.tasksById.get(this.selectedTaskId ?? "") ?? null);
     selectedPeriod = $derived(this.pb.timePeriods.find(period => (
         period.id === this.selectedPeriodId
@@ -48,6 +64,11 @@ export class HoardViewStore {
         return getContext<HoardViewStore>(contextKey);
     }
 
+
+    valueForTask = (task: Task, column: string): string => {
+        const value = taskValue(task, column, this.pb);
+        return Array.isArray(value) ? value.join(", ") : String(value ?? "");
+    };
 
     selectTask = (taskId: string): void => {
         this.selectedTaskId = this.pb.tasksById.has(taskId) ? taskId : null;

@@ -50,6 +50,8 @@ export type Task = PbRecord & {
 	expand?: {
 		priority?: PriorityEnum,
 		completion?: CompletionEnum,
+        categories?: (PbRecord & { label: string })[],
+        term?: PbRecord & { label: string },
 	},
 };
 
