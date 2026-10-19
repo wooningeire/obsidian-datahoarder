@@ -7,6 +7,7 @@ import TaskCalendar from "../lib/datahoard/TaskCalendar.svelte";
 import TimeTrackingStatus from "./TimeTrackingStatus.svelte";
 import TimePeriodDetails from "./task-details/TimePeriodDetails.svelte";
 import TaskCreateBar from "./TaskCreateBar.svelte";
+import CollectionRecords from "./CollectionRecords.svelte";
 
 let {
     view,
@@ -62,6 +63,7 @@ let hoardviewTaskListBounds = $derived.by(() => {
                             hoardviewTaskListScrollTop = 0;
                             if (hoardviewTaskListEl) hoardviewTaskListEl.scrollTop = 0;
                         }}
+                        aria-pressed={store.viewIndex === index}
                     >{view.name}</button>
                 {/each}
             </hoardview-file-tabs>
@@ -70,9 +72,14 @@ let hoardviewTaskListBounds = $derived.by(() => {
                 <task-list-panel>
                     <TaskCreateBar />
 
+                    {#if store.collectionView.type !== "list"}
+                        {#key store.viewIndex}
+                            <CollectionRecords />
+                        {/key}
+                    {:else}
                     <hoardview-task-list-scroller
-                        onscroll={() => {
-                            hoardviewTaskListScrollTop = hoardviewTaskListEl!.scrollTop;
+                        onscroll={(event: Event) => {
+                            hoardviewTaskListScrollTop = (event.currentTarget as HTMLElement).scrollTop;
                         }}
                         bind:clientHeight={null, height => hoardviewTaskListClientHeight = height!}
                         bind:this={hoardviewTaskListEl}
@@ -90,6 +97,7 @@ let hoardviewTaskListBounds = $derived.by(() => {
                             {/each}
                         </hoardview-task-list>
                     </hoardview-task-list-scroller>
+                    {/if}
                 </task-list-panel>
             {:else}
                 <calendar-panel>
@@ -153,6 +161,13 @@ hoardview-task-list-scroller {
     width: 100%;
     overflow-x: hidden;
     overflow-y: auto;
+}
+
+task-list-panel {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
 }
 
 hoardview-task-list {
