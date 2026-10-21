@@ -2,6 +2,7 @@
 import { HoardViewStore } from "./HoardViewStore.svelte";
 import TaskClock from "../lib/datahoard/TaskClock.svelte";
 import TaskNoteLink from "./TaskNoteLink.svelte";
+import TaskField from "./TaskField.svelte";
 
 let { columns, rows }: { columns: string[], rows: number[] } = $props();
 const store = HoardViewStore.use();
@@ -13,17 +14,18 @@ const store = HoardViewStore.use();
     role="table"
     aria-label={store.collectionView.name}
     aria-rowcount={store.visibleTasks.length + 1}
-    aria-colcount={columns.length + 1}
+    aria-colcount={columns.length + 2}
     style:--field-count={columns.length}
 >
     <div class="table-row header" role="row">
+        <div role="columnheader">Open</div>
         {#each columns as column}
             <div role="columnheader">{column}</div>
         {/each}
         <div role="columnheader">Actions</div>
     </div>
     <div class="virtual-rows" role="rowgroup" style:height="{store.visibleTasks.length * 2}em">
-        {#each rows as index (index)}
+        {#each rows as index (store.visibleTasks[index]!.id)}
             {@const task = store.visibleTasks[index]!}
             <div
                 class="table-row"
@@ -32,19 +34,15 @@ const store = HoardViewStore.use();
                 aria-selected={store.selectedTaskId === task.id}
                 style:grid-area="{index + 1} / 1"
             >
+                <div role="cell">
+                    <button onclick={() => store.selectTask(task.id)}>Open</button>
+                </div>
                 {#each columns as column}
                     <div role="cell" title={store.valueForTask(task, column)}>
-                        {#if column === "basename" || column === "label"}
-                            <button onclick={() => store.selectTask(task.id)}>{task.label || "(untitled)"}</button>
-                        {:else}
-                            {store.valueForTask(task, column)}
-                        {/if}
+                        <TaskField {task} {column} />
                     </div>
                 {/each}
                 <div class="actions" role="cell">
-                    {#if !columns.includes("basename") && !columns.includes("label")}
-                        <button onclick={() => store.selectTask(task.id)}>Open</button>
-                    {/if}
                     <TaskNoteLink {task} />
                     <TaskClock compact taskId={task.id} />
                 </div>
@@ -58,7 +56,7 @@ const store = HoardViewStore.use();
 
 <style lang="scss">
 .records {
-    min-width: calc(var(--field-count) * 10rem + 14rem);
+    min-width: calc(var(--field-count) * 10rem + 19rem);
 
     .virtual-rows {
         display: grid;
@@ -67,7 +65,7 @@ const store = HoardViewStore.use();
 
     .table-row {
         display: grid;
-        grid-template-columns: repeat(var(--field-count), minmax(10rem, 1fr)) 14rem;
+        grid-template-columns: 5rem repeat(var(--field-count), minmax(10rem, 1fr)) 14rem;
         align-items: center;
         height: 2em;
 

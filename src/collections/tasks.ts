@@ -1,18 +1,35 @@
 import definition from "./Base.collection";
 import type { CollectionView } from "./collection";
-import type { Task } from "../lib/pb";
+import type { Task, TaskPatch } from "../lib/pb";
 import type { PbStore } from "../lib/datahoard/pbStore.svelte";
 
 
-type TaskSource = Pick<PbStore, "tasksById" | "priorities" | "completions" | "totalTime">;
+type TaskSource = Pick<
+    PbStore,
+    "tasksById" | "priorities" | "completions" | "terms" | "categories" | "totalTime"
+>;
 
-const fields: Record<string, keyof Task> = {
-    basename: "label",
-    "Hr initial estimate": "hr_initial_estimate",
-    "Hr remaining": "hr_remaining",
-    "Target start": "target_start",
-    "Target due": "target_due",
-    "Hard due": "hard_due",
+type TaskField = {
+    field: keyof TaskPatch,
+    type: "text" | "number" | "date" | "relation",
+    options?: "tasks" | "priorities" | "completions" | "terms" | "categories",
+    multiple?: boolean,
+};
+
+export const taskFields: Record<string, TaskField> = {
+    basename: { field: "label", type: "text" },
+    label: { field: "label", type: "text" },
+    Parents: { field: "parent_tasks", type: "relation", options: "tasks", multiple: true },
+    Dependencies: { field: "dependency_tasks", type: "relation", options: "tasks", multiple: true },
+    Priority: { field: "priority", type: "relation", options: "priorities" },
+    Completion: { field: "completion", type: "relation", options: "completions" },
+    Term: { field: "term", type: "relation", options: "terms" },
+    Categories: { field: "categories", type: "relation", options: "categories", multiple: true },
+    "Hr initial estimate": { field: "hr_initial_estimate", type: "number" },
+    "Hr remaining": { field: "hr_remaining", type: "number" },
+    "Target start": { field: "target_start", type: "date" },
+    "Target due": { field: "target_due", type: "date" },
+    "Hard due": { field: "hard_due", type: "date" },
 };
 
 
@@ -26,11 +43,15 @@ export const taskValue = (task: Task, column: string, source: TaskSource): unkno
         case "Dependencies": return task.dependency_tasks.map(id => source.tasksById.get(id)?.label ?? id);
         case "Priority": return source.priorities.find(row => row.id === task.priority)?.label ?? task.priority;
         case "Completion": return source.completions.find(row => row.id === task.completion)?.label ?? task.completion;
-        case "Term": return task.expand?.term?.label ?? task.term;
-        case "Categories": return task.expand?.categories?.map(row => row.label) ?? task.categories;
+        case "Term": return source.terms.find(row => row.id === task.term)?.label ?? task.expand?.term?.label ?? task.term;
+        case "Categories": return task.categories.map(id => (
+            source.categories.find(row => row.id === id)?.label
+            ?? task.expand?.categories?.find(row => row.id === id)?.label
+            ?? id
+        ));
         case "Hr completed": return source.totalTime(task.id) / 3600000;
     }
-    return task[fields[column] ?? column as keyof Task];
+    return task[taskFields[column]?.field ?? column as keyof Task];
 };
 
 

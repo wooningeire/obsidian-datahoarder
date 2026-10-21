@@ -30,6 +30,10 @@ export type CompletionEnum = PbRecord & {
 	label: string,
 };
 
+export type TaskOption = PbRecord & {
+    label: string,
+};
+
 export type Task = PbRecord & {
 	label: string,
 	priority: string,
@@ -60,6 +64,21 @@ export type TimePeriod = PbRecord & {
 	end: string,
 	task: string,
 };
+
+export type TaskPatch = Partial<Pick<Task,
+    | "label"
+    | "priority"
+    | "completion"
+    | "parent_tasks"
+    | "dependency_tasks"
+    | "hr_initial_estimate"
+    | "hr_remaining"
+    | "target_start"
+    | "target_due"
+    | "hard_due"
+    | "term"
+    | "categories"
+>>;
 
 const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
     let res: Response;

@@ -2,6 +2,7 @@
 import { HoardViewStore } from "./HoardViewStore.svelte";
 import TaskClock from "../lib/datahoard/TaskClock.svelte";
 import TaskNoteLink from "./TaskNoteLink.svelte";
+import TaskField from "./TaskField.svelte";
 
 let { columns, rows, perRow, rowEm }: {
     columns: string[],
@@ -34,7 +35,7 @@ const store = HoardViewStore.use();
                     <dl>
                         {#each columns as column}
                             <dt title={column}>{column}</dt>
-                            <dd title={store.valueForTask(task, column)}>{store.valueForTask(task, column)}</dd>
+                            <dd title={store.valueForTask(task, column)}><TaskField {task} {column} /></dd>
                         {/each}
                     </dl>
                     <footer>

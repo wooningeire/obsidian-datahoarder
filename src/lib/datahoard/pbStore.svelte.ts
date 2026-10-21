@@ -1,5 +1,12 @@
 import { listAll, create, update, remove } from "../pb";
-import type { Task, PriorityEnum, CompletionEnum, TimePeriod } from "../pb";
+import type {
+    Task,
+    TaskOption,
+    TaskPatch,
+    PriorityEnum,
+    CompletionEnum,
+    TimePeriod,
+} from "../pb";
 import { setContext, getContext, onMount, onDestroy } from "svelte";
 
 //#region TODO needs review
@@ -9,6 +16,8 @@ export class PbStore {
 	tasks = $state<Task[]>([]);
 	priorities = $state<PriorityEnum[]>([]);
 	completions = $state<CompletionEnum[]>([]);
+    terms = $state<TaskOption[]>([]);
+    categories = $state<TaskOption[]>([]);
 	timePeriods = $state<TimePeriod[]>([]);
 
     tasksById = $derived(new Map(this.tasks.map(task => [task.id, task])));
@@ -31,11 +40,13 @@ export class PbStore {
 
 	async loadAll() {
         await this.beforeLoad();
-        const [tasks, priorities, completions, periods] = await Promise.all([
+        const [tasks, priorities, completions, periods, terms, categories] = await Promise.all([
             listAll<Task>("tasks", { expand: "priority,completion,categories,term", sort: "-created,id" }),
             listAll<PriorityEnum>("priority_enum", { sort: "value,id" }),
             listAll<CompletionEnum>("completion_enum", { sort: "id" }),
             listAll<TimePeriod>("task_time_periods", { sort: "-start,id" }),
+            listAll<TaskOption>("task_terms", { sort: "label,id" }),
+            listAll<TaskOption>("task_categories", { sort: "label,id" }),
 		]);
         if (periods.filter(period => !period.end).length > 1) {
             throw new Error("PocketBase has multiple running timers. Stop the extra timers before tracking time.");
@@ -44,6 +55,8 @@ export class PbStore {
         this.priorities = priorities;
         this.completions = completions;
         this.timePeriods = periods;
+        this.terms = terms;
+        this.categories = categories;
         this.ready = true;
 	}
 
@@ -144,6 +157,25 @@ export class PbStore {
         const index = this.tasks.findIndex(task => task.id === taskId);
         const task = this.tasks[index];
         if (task) this.tasks[index] = { ...task, ...patch };
+    };
+
+    updateTask = async (taskId: string, patch: TaskPatch): Promise<void> => {
+        const updated = await update<Task>("tasks", taskId, patch);
+        this.applyTaskPatch(taskId, {
+            ...Object.fromEntries(Object.keys(patch).map(field => [field, updated[field as keyof Task]])),
+            updated: updated.updated,
+            expand: {
+                ...this.tasksById.get(taskId)?.expand,
+                ...(patch.priority !== undefined ? {
+                    priority: this.priorities.find(row => row.id === updated.priority),
+                } : {}),
+                ...(patch.completion !== undefined ? {
+                    completion: this.completions.find(row => row.id === updated.completion),
+                } : {}),
+                ...(patch.term !== undefined ? { term: undefined } : {}),
+                ...(patch.categories !== undefined ? { categories: undefined } : {}),
+            },
+        });
     };
 
 	async saveEdit(task: Task, newLabel: string) {
