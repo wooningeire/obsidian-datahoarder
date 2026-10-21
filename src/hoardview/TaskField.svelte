@@ -4,19 +4,21 @@ import type { Task } from "../lib/pb";
 import { toDatetimeLocal } from "../lib/datahoard/pbStore.svelte";
 import { taskFields } from "../collections/tasks";
 import { HoardViewStore } from "./HoardViewStore.svelte";
-import { fieldPopup } from "./fieldPopup";
+import FieldPopup from "./FieldPopup.svelte";
+import TaskMultiSelect from "./TaskMultiSelect.svelte";
 
 let { task, column }: { task: Task, column: string } = $props();
 
 const store = HoardViewStore.use();
 const field = $derived(taskFields[column]);
+let current = $derived(field ? task[field.field] : "");
 const value = $derived(store.valueForTask(task, column));
+const inputType = $derived(field?.type === "date" ? "datetime-local" : field?.type ?? "text");
 const options = $derived.by(() => {
     if (!field?.options) return [];
     const choices = store.pb[field.options].filter(option => (
         field.options !== "tasks" || option.id !== task.id
     ));
-    const current = task[field.field];
     const ids = Array.isArray(current) ? current : [String(current ?? "")];
     return [
         ...choices,
@@ -29,74 +31,57 @@ let trigger: HTMLButtonElement | undefined = $state();
 let control: HTMLInputElement | HTMLSelectElement | undefined = $state();
 let editing = $state(false);
 let draft = $state("");
-let selected = $state<string[]>([]);
-let search = $state("");
-let saving = $state(false);
 let error = $state("");
-const filteredOptions = $derived(options.filter(option => (
-    (option.label || option.id).toLocaleLowerCase().includes(search.toLocaleLowerCase())
-)));
 
 const close = (): void => {
     editing = false;
     error = "";
 };
 
-const edit = async (): Promise<void> => {
-    if (!field) return;
-    const current = task[field.field];
-    draft = field.type === "date" ? toDatetimeLocal(String(current ?? "")) : String(current ?? "");
-    selected = Array.isArray(current) ? [...current] : [];
-    search = "";
+const edit = async (event: MouseEvent): Promise<void> => {
+    event.preventDefault();
+    draft = field?.type === "date" ? toDatetimeLocal(String(current ?? "")) : String(current ?? "");
     error = "";
     editing = true;
     await tick();
-    if (!field.multiple) control?.focus();
-    if (field.type === "text" && control instanceof HTMLInputElement) control.select();
+    if (!field?.multiple) control?.focus();
+    if (field?.type === "text" && control instanceof HTMLInputElement) control.select();
 };
 
 const cancel = async (): Promise<void> => {
-    if (saving) return;
+    if (store.pb.busy) return;
     close();
     await tick();
     trigger?.focus({ preventScroll: true });
 };
 
-const keyboard = (element: HTMLFormElement) => {
-    const onKeyDown = (event: KeyboardEvent): void => {
-        if (event.key === "Escape") {
-            event.preventDefault();
-            void cancel();
-        }
-    };
-    element.addEventListener("keydown", onKeyDown);
-    return { destroy: () => element.removeEventListener("keydown", onKeyDown) };
+const escape = (event: KeyboardEvent): void => {
+    if (event.key === "Escape") {
+        event.preventDefault();
+        void cancel();
+    }
 };
 
-const save = async (event?: SubmitEvent): Promise<void> => {
-    event?.preventDefault();
-    if (!field || saving || store.pb.busy) return;
-    saving = true;
+const save = async (next: string | string[]): Promise<void> => {
+    if (!field || store.pb.busy) return;
     error = "";
     await store.pb.run(async () => {
-        if (field.type !== "date" || draft !== toDatetimeLocal(String(task[field.field] ?? ""))) {
-            let next: string | number | string[] = field.multiple ? selected : draft;
-            if (field.type === "text") {
-                next = draft.trim();
-                if (!next) throw new Error("Enter a task name.");
-            }
-            if (field.type === "number") next = Number(draft);
-            if (field.type === "date") next = draft ? new Date(draft).toISOString() : "";
-            await store.pb.updateTask(task.id, { [field.field]: next });
+        let value: string | number | string[] = next;
+        if (field.type === "text") {
+            value = String(next).trim();
+            if (!value) throw new Error("Enter a task name.");
+        }
+        if (field.type === "number") value = Number(next);
+        if (field.type === "date") value = next ? new Date(String(next)).toISOString() : "";
+        if (field.type !== "date" || next !== toDatetimeLocal(String(current ?? ""))) {
+            await store.pb.updateTask(task.id, { [field.field]: value });
         }
         close();
     });
     error = store.pb.error;
-    saving = false;
     await tick();
-    if (field.type === "relation" && !field.multiple && control instanceof HTMLSelectElement) {
-        control.value = String(task[field.field] ?? "");
-    } else if (!editing) trigger?.focus({ preventScroll: true });
+    if (field.type === "relation" && !field.multiple) current = task[field.field];
+    else if (!editing) trigger?.focus({ preventScroll: true });
 };
 </script>
 
@@ -108,12 +93,9 @@ const save = async (event?: SubmitEvent): Promise<void> => {
         aria-label={column}
         aria-invalid={!!error}
         title={error || value}
-        value={task[field.field]}
+        bind:value={current}
         disabled={!store.pb.ready || store.pb.busy}
-        onchange={event => {
-            draft = event.currentTarget.value;
-            void save();
-        }}
+        onchange={event => save(event.currentTarget.value)}
     >
         <option value="">—</option>
         {#each options as option (option.id)}
@@ -131,71 +113,51 @@ const save = async (event?: SubmitEvent): Promise<void> => {
             title={value}
             disabled={!store.pb.ready || store.pb.busy}
             onclick={edit}
-            oncontextmenu={event => {
-                event.preventDefault();
-                void edit();
-            }}
+            oncontextmenu={edit}
         >{value || "—"}</button>
     {/if}
     {#if editing}
-        <form
-            class="editor"
-            class:multiple={field.multiple}
-            popover={field.multiple ? "auto" : undefined}
-            aria-label={column}
-            aria-busy={saving}
-            onsubmit={save}
-            use:keyboard
-            use:fieldPopup={field.multiple && trigger ? { anchor: trigger, onClose: close } : undefined}
-        >
-            {#if field.multiple}
-                <input type="search" aria-label={`Search ${column}`} bind:value={search} disabled={saving} />
-                <div class="choices" role="group" aria-label={column}>
-                    {#each filteredOptions as option (option.id)}
-                        <label>
-                            <input
-                                type="checkbox"
-                                checked={selected.includes(option.id)}
-                                onchange={event => selected = event.currentTarget.checked
-                                    ? [...selected, option.id]
-                                    : selected.filter(id => id !== option.id)}
-                                disabled={saving}
-                            />
-                            <span>{option.label || option.id}</span>
-                        </label>
-                    {/each}
-                </div>
-            {:else if field.type === "number"}
+        {#if field.multiple && trigger}
+            <TaskMultiSelect
+                anchor={trigger}
+                label={column}
+                {options}
+                value={Array.isArray(current) ? current : []}
+                busy={store.pb.busy}
+                {error}
+                onsave={save}
+                onclose={close}
+                oncancel={cancel}
+            />
+        {:else}
+            <form class="editor" aria-label={column} aria-busy={store.pb.busy} onsubmit={event => {
+                event.preventDefault();
+                void save(draft);
+            }}>
                 <input
                     bind:this={control}
+                    type={inputType}
                     aria-label={column}
-                    type="number"
-                    step="any"
                     value={draft}
                     oninput={event => draft = event.currentTarget.value}
-                    disabled={saving}
+                    onkeydown={escape}
+                    step={field.type === "number" ? "any" : undefined}
+                    required={field.type === "text"}
+                    disabled={store.pb.busy}
                 />
-            {:else if field.type === "date"}
-                <input bind:this={control} aria-label={column} type="datetime-local" bind:value={draft} disabled={saving} />
-            {:else}
-                <input bind:this={control} aria-label={column} bind:value={draft} required disabled={saving} />
-            {/if}
-            <button type="submit" aria-label="Save" title="Save" disabled={store.pb.busy}>✓</button>
-            <button type="button" aria-label="Cancel" title="Cancel" disabled={saving} onclick={cancel}>✕</button>
-            {#if error && field.multiple}<p role="alert" title={error}>{error}</p>{/if}
-        </form>
+                <button type="submit" aria-label="Save" title="Save" disabled={store.pb.busy} onkeydown={escape}>✓</button>
+                <button type="button" aria-label="Cancel" title="Cancel" disabled={store.pb.busy} onkeydown={escape} onclick={cancel}>✕</button>
+            </form>
+        {/if}
     {/if}
 {:else}
     {value}
 {/if}
 
 {#if error && !field?.multiple}
-    <p
-        class="field-error"
-        popover="auto"
-        role="alert"
-        use:fieldPopup={{ anchor: control ?? trigger!, onClose: () => error = "" }}
-    >{error}</p>
+    <FieldPopup anchor={control ?? trigger!} label={column} onclose={() => error = ""}>
+        <span role="alert">{error}</span>
+    </FieldPopup>
 {/if}
 
 
@@ -208,73 +170,13 @@ const save = async (event?: SubmitEvent): Promise<void> => {
     white-space: nowrap;
 }
 
-[popover] {
-    position: fixed;
-    inset: auto;
-    margin: 0;
-    width: 24rem;
-    max-width: calc(100vw - 1rem);
-    max-height: calc(100vh - 1rem);
-    padding: 0.5rem;
-    box-sizing: border-box;
-    border: 0.0625rem solid var(--background-modifier-border, currentColor);
-    background: var(--background-primary, Canvas);
-    color: inherit;
-    white-space: normal;
-}
-
-[popover]:not(:popover-open) {
-    display: none;
-}
-
 .editor {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    align-items: center;
+    display: flex;
     gap: 0.25em;
-    line-height: normal;
 
     > input {
+        flex: 1;
         min-width: 0;
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-    > button {
-        padding-inline: 0.4em;
-    }
-
-    > p {
-        grid-column: 1 / -1;
-        margin: 0;
-        overflow-wrap: anywhere;
-    }
-
-    &.multiple > input,
-    .choices {
-        grid-column: 1 / -1;
-    }
-
-    &.multiple > button[type="submit"] {
-        grid-column: 2;
-    }
-
-    .choices {
-        height: 12em;
-        max-height: calc(100vh - 8rem);
-        overflow-y: auto;
-
-        > label {
-            display: flex;
-            align-items: center;
-            gap: 0.5em;
-            min-height: 2em;
-            white-space: normal;
-
-            > input {
-                flex-shrink: 0;
-            }
-        }
     }
 }
 </style>
