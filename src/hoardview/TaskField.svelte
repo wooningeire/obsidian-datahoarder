@@ -4,7 +4,8 @@ import type { Task } from "../lib/pb";
 import { toDatetimeLocal } from "../lib/datahoard/pbStore.svelte";
 import { taskFields } from "../collections/tasks";
 import { HoardViewStore } from "./HoardViewStore.svelte";
-import FieldPopup from "./FieldPopup.svelte";
+import Popover from "../components/Popover.svelte";
+import EditPopover from "../components/EditPopover.svelte";
 import TaskMultiSelect from "./TaskMultiSelect.svelte";
 
 let { task, column }: { task: Task, column: string } = $props();
@@ -38,13 +39,15 @@ const close = (): void => {
     error = "";
 };
 
-const edit = async (event: MouseEvent): Promise<void> => {
+const edit = (event: MouseEvent): void => {
     event.preventDefault();
     draft = field?.type === "date" ? toDatetimeLocal(String(current ?? "")) : String(current ?? "");
     error = "";
     editing = true;
-    await tick();
-    if (!field?.multiple) control?.focus();
+};
+
+const focus = (): void => {
+    control?.focus({ preventScroll: true });
     if (field?.type === "text" && control instanceof HTMLInputElement) control.select();
 };
 
@@ -55,18 +58,11 @@ const cancel = async (): Promise<void> => {
     trigger?.focus({ preventScroll: true });
 };
 
-const escape = (event: KeyboardEvent): void => {
-    if (event.key === "Escape") {
-        event.preventDefault();
-        void cancel();
-    }
-};
-
-const save = async (next: string | string[]): Promise<void> => {
+const save = async (next: string | Set<string>): Promise<void> => {
     if (!field || store.pb.busy) return;
     error = "";
     await store.pb.run(async () => {
-        let value: string | number | string[] = next;
+        let value: string | number | Set<string> = next;
         if (field.type === "text") {
             value = String(next).trim();
             if (!value) throw new Error("Enter a task name.");
@@ -103,21 +99,19 @@ const save = async (next: string | string[]): Promise<void> => {
         {/each}
     </select>
 {:else if field}
-    {#if !editing || field.multiple}
-        <button
-            bind:this={trigger}
-            class="field"
-            type="button"
-            aria-label={column}
-            aria-expanded={field.multiple ? editing : undefined}
-            title={value}
-            disabled={!store.pb.ready || store.pb.busy}
-            onclick={edit}
-            oncontextmenu={edit}
-        >{value || "—"}</button>
-    {/if}
-    {#if editing}
-        {#if field.multiple && trigger}
+    <button
+        bind:this={trigger}
+        class="field"
+        type="button"
+        aria-label={column}
+        aria-expanded={editing}
+        title={value}
+        disabled={!store.pb.ready || store.pb.busy}
+        onclick={edit}
+        oncontextmenu={edit}
+    >{value || "—"}</button>
+    {#if editing && trigger}
+        {#if field.multiple}
             <TaskMultiSelect
                 anchor={trigger}
                 label={column}
@@ -125,39 +119,42 @@ const save = async (next: string | string[]): Promise<void> => {
                 value={Array.isArray(current) ? current : []}
                 busy={store.pb.busy}
                 {error}
-                onsave={save}
-                onclose={close}
-                oncancel={cancel}
+                onSave={save}
+                onClose={close}
+                onCancel={cancel}
             />
         {:else}
-            <form class="editor" aria-label={column} aria-busy={store.pb.busy} onsubmit={event => {
-                event.preventDefault();
-                void save(draft);
-            }}>
+            <EditPopover
+                anchor={trigger}
+                label={column}
+                busy={store.pb.busy}
+                {error}
+                onSave={() => { void save(draft); }}
+                onClose={close}
+                onCancel={cancel}
+                onOpen={focus}
+            >
                 <input
                     bind:this={control}
                     type={inputType}
                     aria-label={column}
                     value={draft}
                     oninput={event => draft = event.currentTarget.value}
-                    onkeydown={escape}
                     step={field.type === "number" ? "any" : undefined}
                     required={field.type === "text"}
                     disabled={store.pb.busy}
                 />
-                <button type="submit" aria-label="Save" title="Save" disabled={store.pb.busy} onkeydown={escape}>✓</button>
-                <button type="button" aria-label="Cancel" title="Cancel" disabled={store.pb.busy} onkeydown={escape} onclick={cancel}>✕</button>
-            </form>
+            </EditPopover>
         {/if}
     {/if}
 {:else}
     {value}
 {/if}
 
-{#if error && !field?.multiple}
-    <FieldPopup anchor={control ?? trigger!} label={column} onclose={() => error = ""}>
+{#if error && field?.type === "relation" && !field.multiple}
+    <Popover active anchor={control} label={column} onClose={() => error = ""}>
         <span role="alert">{error}</span>
-    </FieldPopup>
+    </Popover>
 {/if}
 
 
@@ -168,15 +165,5 @@ const save = async (next: string | string[]): Promise<void> => {
     text-align: start;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-.editor {
-    display: flex;
-    gap: 0.25em;
-
-    > input {
-        flex: 1;
-        min-width: 0;
-    }
 }
 </style>
