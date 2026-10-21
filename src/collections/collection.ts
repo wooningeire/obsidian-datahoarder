@@ -25,7 +25,6 @@ type CollectionDefinition = {
     name: string,
     source: { type: "pocketbase", collection: "tasks" },
     schema: Record<string, string | CollectionField>,
-    views: CollectionView[],
 };
 
 

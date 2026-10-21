@@ -4,8 +4,9 @@ import type { HoardView } from "./HoardView";
 import { PB_CONTEXT_KEY } from "../lib/datahoard/pbStore.svelte";
 import type { Task, TimePeriod } from "../lib/pb";
 import { createTaskGraph } from "./taskGraph";
-import collection from "../collections/Base.collection";
+import type { CollectionView } from "../collections/collection";
 import { selectTasks, taskValue } from "../collections/tasks";
+import { parseViews } from "./viewConfig";
 
 
 const contextKey = Symbol("datahoarder store context");
@@ -13,19 +14,20 @@ const contextKey = Symbol("datahoarder store context");
 
 export class HoardViewStore {
     readonly view: HoardView;
-    readonly collection = collection;
 
+    views = $state<CollectionView[]>([]);
+    error = $state("");
     viewIndex = $state(0);
     selectedTaskId = $state<string | null>(null);
     selectedPeriodId = $state<string | null>(null);
 
     taskGraph = $derived(createTaskGraph(this.pb.tasks, this.pb.completions));
-    collectionView = $derived(this.collection.views[this.viewIndex]!);
-    visibleTasks = $derived(selectTasks(
+    collectionView = $derived(this.views[this.viewIndex] ?? null);
+    visibleTasks = $derived(this.collectionView ? selectTasks(
         this.collectionView.leafOnly ? this.taskGraph.leafTasks : this.pb.tasks,
         this.collectionView,
         this.pb,
-    ));
+    ) : []);
     visiblePeriods = $derived.by(() => {
         const ids = new Set(this.visibleTasks.map(task => task.id));
         return this.pb.timePeriods.filter(period => (
@@ -48,7 +50,7 @@ export class HoardViewStore {
 
 
     static mount(view: HoardView) {
-        const store = new HoardViewStore(view);
+        const store = view.store;
 
         setContext(contextKey, store);
         setContext(PB_CONTEXT_KEY, store.pb);
@@ -63,6 +65,28 @@ export class HoardViewStore {
     static use() {
         return getContext<HoardViewStore>(contextKey);
     }
+
+
+    setViewData = (data: string, clear: boolean): void => {
+        if (clear) this.clear();
+
+        try {
+            this.views = parseViews(data);
+            this.error = "";
+        } catch (error) {
+            this.views = [];
+            this.error = error instanceof Error ? error.message : String(error);
+        }
+        if (this.viewIndex >= this.views.length) this.viewIndex = 0;
+    };
+
+    clear = (): void => {
+        this.views = [];
+        this.error = "";
+        this.viewIndex = 0;
+        this.selectedTaskId = null;
+        this.selectedPeriodId = null;
+    };
 
 
     valueForTask = (task: Task, column: string): string => {

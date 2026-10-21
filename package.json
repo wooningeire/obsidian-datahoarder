@@ -28,6 +28,7 @@
 	},
 	"dependencies": {
 		"@vaie/hui": "^0.3.0",
+		"json5": "^2.2.3",
 		"obsidian": "latest",
 		"sql.js": "^1.13.0"
 	}

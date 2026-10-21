@@ -19,7 +19,7 @@ const store = HoardViewStore.use();
         onclick={() => store.selectTask(task.id)}
         title={task.label}
     >
-        {#if store.collectionView.columns?.length}
+        {#if store.collectionView?.columns?.length}
             {#each store.collectionView.columns as column}
                 {store.valueForTask(task, column)}{" "}
             {/each}

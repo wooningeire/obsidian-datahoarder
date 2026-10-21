@@ -4,7 +4,14 @@ import TaskClock from "../lib/datahoard/TaskClock.svelte";
 import TaskNoteLink from "./TaskNoteLink.svelte";
 import TaskField from "./TaskField.svelte";
 
-let { columns, rows }: { columns: string[], rows: number[] } = $props();
+let {
+    columns,
+    rows,
+}: {
+    columns: string[],
+    rows: number[],
+} = $props();
+
 const store = HoardViewStore.use();
 </script>
 
@@ -12,7 +19,7 @@ const store = HoardViewStore.use();
 <div
     class="records"
     role="table"
-    aria-label={store.collectionView.name}
+    aria-label={store.collectionView?.name}
     aria-rowcount={store.visibleTasks.length + 1}
     aria-colcount={columns.length + 2}
     style:--field-count={columns.length}

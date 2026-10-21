@@ -56,7 +56,7 @@ let hoardviewTaskListBounds = $derived.by(() => {
     <hoardview-file-view>
         <hoardview-tasks>
             <hoardview-file-tabs>
-                {#each store.collection.views as view, index}
+                {#each store.views as view, index}
                     <button
                         onclick={() => {
                             store.viewIndex = index;
@@ -68,7 +68,9 @@ let hoardviewTaskListBounds = $derived.by(() => {
                 {/each}
             </hoardview-file-tabs>
 
-            {#if store.collectionView.type !== "calendar"}
+            {#if store.error}
+                <p role="alert">{store.error}</p>
+            {:else if store.collectionView && store.collectionView.type !== "calendar"}
                 <task-list-panel>
                     <TaskCreateBar />
 
@@ -99,7 +101,7 @@ let hoardviewTaskListBounds = $derived.by(() => {
                     </hoardview-task-list-scroller>
                     {/if}
                 </task-list-panel>
-            {:else}
+            {:else if store.collectionView}
                 <calendar-panel>
                     <TimeTrackingStatus />
                     <TaskCalendar

@@ -17,7 +17,7 @@ const store = HoardViewStore.use();
 <div
     class="virtual-rows"
     role="list"
-    aria-label={store.collectionView.name}
+    aria-label={store.collectionView?.name}
     style:--per-row={perRow}
     style:--row-height="{rowEm}em"
     style:height="{Math.ceil(store.visibleTasks.length / perRow) * rowEm}em"
