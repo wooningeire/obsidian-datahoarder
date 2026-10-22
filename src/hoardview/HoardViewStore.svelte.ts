@@ -4,7 +4,7 @@ import type { HoardView } from "./HoardView";
 import { PB_CONTEXT_KEY } from "../lib/datahoard/pbStore.svelte";
 import type { Task, TimePeriod } from "../lib/pb";
 import { createTaskGraph } from "./taskGraph";
-import type { CollectionView } from "../collections/collection";
+import type { CollectionView, derived } from "../collections/collection";
 import { selectTasks, taskValue } from "../collections/tasks";
 import { parseViews } from "./viewConfig";
 
@@ -12,9 +12,14 @@ import { parseViews } from "./viewConfig";
 const contextKey = Symbol("datahoarder store context");
 
 
+type HoardCollection = (params: {
+    derived: typeof derived,
+}) => CollectionView;
+
 export class HoardViewStore {
     readonly view: HoardView;
 
+    source = $state<HoardCollection | null>(null);
     views = $state<CollectionView[]>([]);
     error = $state("");
     viewIndex = $state(0);
@@ -67,26 +72,49 @@ export class HoardViewStore {
     }
 
 
-    setViewData = (data: string, clear: boolean): void => {
-        if (clear) this.clear();
-
+    async setFileContents(data: string) {
+        let url = URL.createObjectURL(new Blob([data], {
+            type: "text/javascript",
+        }));
+        console.log(url, data);
+        
         try {
-            this.views = parseViews(data);
+            const {
+                source,
+                views,
+            }: {
+                source: HoardCollection,
+                views: CollectionView[],
+            } = await import(url);
+
+            console.log(source, views);
+
+            this.source = source;
+            this.views = views;
+
             this.error = "";
         } catch (error) {
+            this.source = null;
             this.views = [];
-            this.error = error instanceof Error ? error.message : String(error);
-        }
-        if (this.viewIndex >= this.views.length) this.viewIndex = 0;
-    };
 
-    clear = (): void => {
+            this.error = error instanceof Error ? error.message : String(error);
+        } finally {
+            URL.revokeObjectURL(url);
+        }
+        
+        if (this.viewIndex >= this.views.length) {
+            this.viewIndex = 0;
+        }
+    }
+
+    clear() {
+        this.source = null;
         this.views = [];
         this.error = "";
         this.viewIndex = 0;
         this.selectedTaskId = null;
         this.selectedPeriodId = null;
-    };
+    }
 
 
     valueForTask = (task: Task, column: string): string => {

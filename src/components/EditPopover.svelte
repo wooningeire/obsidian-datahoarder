@@ -56,7 +56,9 @@ let {
             >✕</button>
         </popover-edit-buttons>
 
-        {#if error}<p role="alert">{error}</p>{/if}
+        {#if error}
+            <alert-text>{error}</alert-text>
+        {/if}
     </popover-contents>
 </Popover>
 

@@ -48,15 +48,18 @@ export class HoardView extends TextFileView {
         this.component = null;
     }
 
-    // Get the data from the view to save to disk
     getViewData(): string {
         return this.data;
     }
 
-    // Load data from disk into the view
-    setViewData(data: string, clear: boolean): void {
+    async setViewData(data: string, clear: boolean) {
         this.data = data;
-        this.store.setViewData(data, clear);
+
+        if (clear) {
+            this.store.clear();
+        }
+        
+        this.store.setFileContents(data);
     }
 
     clear(): void {

@@ -1,4 +1,3 @@
-import definition from "./Base.collection";
 import type { CollectionView } from "./collection";
 import type { Task, TaskPatch } from "../lib/pb";
 import type { PbStore } from "../lib/datahoard/pbStore.svelte";
