@@ -124,10 +124,11 @@ export class HoardViewStore {
         return Array.isArray(value) ? value.join(", ") : String(value ?? "");
     };
 
-    selectTask = (taskId: string): void => {
+
+    openTaskDetails(taskId: string) {
         this.selectedTaskId = this.pb.tasksById.has(taskId) ? taskId : null;
         this.selectedPeriodId = null;
-    };
+    }
 
     selectPeriod = (period: TimePeriod): void => {
         this.selectedTaskId = this.pb.tasksById.has(period.task) ? period.task : null;
@@ -136,7 +137,6 @@ export class HoardViewStore {
 
     createTask = async (fields: Partial<Task>): Promise<void> => {
         const task = await this.pb.addTask(fields);
-        this.selectTask(task.id);
     };
 
     labelForTask = (taskId: string): string => {

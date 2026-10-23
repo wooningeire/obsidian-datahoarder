@@ -31,7 +31,7 @@ const store = HoardViewStore.use();
                     aria-setsize={store.visibleTasks.length}
                     aria-current={store.selectedTaskId === task.id ? "true" : undefined}
                 >
-                    <button title={task.label} onclick={() => store.selectTask(task.id)}>{task.label || "(untitled)"}</button>
+                    <button onclick={() => store.openTaskDetails(task.id)}>Open</button>
                     <dl>
                         {#each columns as column}
                             <dt title={column}>{column}</dt>

@@ -91,7 +91,7 @@ const createTask = async (): Promise<void> => {
                 style:grid-area="{index + 1} / 1"
             >
                 <div role="cell">
-                    <button onclick={() => store.selectTask(task.id)}>Open</button>
+                    <button onclick={() => store.openTaskDetails(task.id)}>Open</button>
                 </div>
 
                 {#each columns as column}

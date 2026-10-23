@@ -16,7 +16,7 @@ const store = HoardViewStore.use();
 <hoard-task style:grid-area="{index + 1} / 1">
     <button
         class="task-label"
-        onclick={() => store.selectTask(task.id)}
+        onclick={() => store.openTaskDetails(task.id)}
         title={task.label}
     >
         {#if store.collectionView?.columns?.length}

@@ -38,7 +38,7 @@ const children = $derived(store.taskGraph.childrenById.get(task.id));
 {:else}
     <task-ancestry-list>
         {#each ancestors as ancestor (ancestor.id)}
-            <button onclick={() => store.selectTask(ancestor.id)}>
+            <button onclick={() => store.openTaskDetails(ancestor.id)}>
                 {ancestor.label}
             </button>
         {/each}
@@ -49,7 +49,7 @@ const children = $derived(store.taskGraph.childrenById.get(task.id));
 
 <task-children-list>
     {#each children as child (child.id)}
-        <button onclick={() => store.selectTask(child.id)}>
+        <button onclick={() => store.openTaskDetails(child.id)}>
             {child.label}
         </button>
     {/each}
