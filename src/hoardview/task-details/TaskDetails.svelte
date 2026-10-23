@@ -28,10 +28,19 @@ const ancestors = $derived(taskAncestors(task.id, store.taskGraph));
     {/each}
 </task-ancestry-list>
 
+<h3>Children</h3>
+
+<task-children-list>
+    {#each store.taskGraph.childrenById.get(task.id) as child (child.id)}
+        <button onclick={() => store.selectTask(child.id)}>
+            {child.label || "(untitled)"}
+        </button>
+    {/each}
+</task-children-list>
 
 <style lang="scss">
-    task-ancestry-list {
-        display: flex;
-        flex-direction: column;
-    }
+task-ancestry-list {
+    display: flex;
+    flex-direction: column;
+}
 </style>
