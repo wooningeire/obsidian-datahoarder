@@ -1,6 +1,6 @@
 <script lang="ts">
 import { untrack } from "svelte";
-import EditPopover from "../components/EditPopover.svelte";
+import EditPopover from "../../components/EditPopover.svelte";
 	import { SvelteSet } from "svelte/reactivity";
 
 let {

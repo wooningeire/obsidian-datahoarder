@@ -1,5 +1,5 @@
 <script lang="ts">
-import { HoardViewStore } from "./HoardViewStore.svelte";
+import { HoardViewStore } from "../HoardViewStore.svelte";
 
 const store = HoardViewStore.use();
 let label = $state("");

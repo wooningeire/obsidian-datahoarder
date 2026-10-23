@@ -1,9 +1,9 @@
 <script lang="ts">
-import { HoardViewStore } from "./HoardViewStore.svelte";
-import TaskClock from "../lib/datahoard/TaskClock.svelte";
-import TaskNoteLink from "./TaskNoteLink.svelte";
-import TaskField from "./TaskField.svelte";
-import type { Task } from "../lib/pb";
+import { HoardViewStore } from "../HoardViewStore.svelte";
+import TaskClock from "../../lib/datahoard/TaskClock.svelte";
+import TaskNoteLink from "../task/TaskNoteLink.svelte";
+import TaskField from "../task/TaskField.svelte";
+import type { Task } from "../../lib/pb";
 
 let {
     columns,

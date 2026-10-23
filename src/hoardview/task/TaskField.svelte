@@ -1,11 +1,11 @@
 <script lang="ts">
 import { tick } from "svelte";
-import type { Task, TaskPatch } from "../lib/pb";
-import { toDatetimeLocal } from "../lib/datahoard/pbStore.svelte";
-import { taskFields } from "../collections/tasks";
-import { HoardViewStore } from "./HoardViewStore.svelte";
-import Popover from "../components/Popover.svelte";
-import EditPopover from "../components/EditPopover.svelte";
+import type { Task, TaskPatch } from "../../lib/pb";
+import { toDatetimeLocal } from "../../lib/datahoard/pbStore.svelte";
+import { taskFields } from "../../collections/tasks";
+import { HoardViewStore } from "../HoardViewStore.svelte";
+import Popover from "../../components/Popover.svelte";
+import EditPopover from "../../components/EditPopover.svelte";
 import TaskMultiSelect from "./TaskMultiSelect.svelte";
 
 let {

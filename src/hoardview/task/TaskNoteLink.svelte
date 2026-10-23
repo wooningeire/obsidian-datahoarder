@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Keymap } from "obsidian";
-import type { Task } from "../lib/pb";
-import { HoardViewStore } from "./HoardViewStore.svelte";
+import type { Task } from "../../lib/pb";
+import { HoardViewStore } from "../HoardViewStore.svelte";
 
 let {
     task,

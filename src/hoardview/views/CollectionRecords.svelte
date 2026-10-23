@@ -1,5 +1,5 @@
 <script lang="ts">
-import { HoardViewStore } from "./HoardViewStore.svelte";
+import { HoardViewStore } from "../HoardViewStore.svelte";
 import CollectionTable from "./CollectionTable.svelte";
 import CollectionCards from "./CollectionCards.svelte";
 

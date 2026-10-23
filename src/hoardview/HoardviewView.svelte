@@ -1,18 +1,18 @@
 <script lang="ts">
-import type { HoardView } from "./HoardView";
-import HoardTaskView from "./HoardTaskView.svelte";
+import type { Hoardview } from "./Hoardview";
+import TaskView from "./task/TaskView.svelte";
 import { HoardViewStore } from "./HoardViewStore.svelte";
 import TaskDetails from "./task-details/TaskDetails.svelte";
 import TaskCalendar from "../lib/datahoard/TaskCalendar.svelte";
-import TimeTrackingStatus from "./TimeTrackingStatus.svelte";
+import TimeTrackingStatus from "./time/TimeTrackingStatus.svelte";
 import TimePeriodDetails from "./task-details/TimePeriodDetails.svelte";
-import TaskCreateBar from "./TaskCreateBar.svelte";
-import CollectionRecords from "./CollectionRecords.svelte";
+import TaskCreateBar from "./task/TaskCreateBar.svelte";
+import CollectionRecords from "./views/CollectionRecords.svelte";
 
 let {
     view,
 }: {
-    view: HoardView,
+    view: Hoardview,
 } = $props();
 
 
@@ -92,7 +92,7 @@ let hoardviewTaskListBounds = $derived.by(() => {
                             style:--n-entries={store.visibleTasks.length}
                         >
                             {#each store.visibleTasks.slice(hoardviewTaskListBounds.startN, hoardviewTaskListBounds.endN) as task, i (task.id)}
-                                <HoardTaskView
+                                <TaskView
                                     {task}
                                     index={i + hoardviewTaskListBounds.startN}
                                 />

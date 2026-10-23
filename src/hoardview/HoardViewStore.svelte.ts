@@ -1,9 +1,9 @@
 import { getContext, onMount, setContext } from "svelte";
 import type { PaneType } from "obsidian";
-import type { HoardView } from "./HoardView";
+import type { Hoardview } from "./Hoardview";
 import { PB_CONTEXT_KEY } from "../lib/datahoard/pbStore.svelte";
 import type { Task, TimePeriod } from "../lib/pb";
-import { createTaskGraph } from "./taskGraph";
+import { createTaskGraph } from "./task/taskGraph";
 import type { CollectionView, derived } from "../collections/collection";
 import { selectTasks, taskValue } from "../collections/tasks";
 import { serveVaultModule } from "./serveVaultModule";
@@ -17,7 +17,7 @@ type HoardCollection = (params: {
 }) => CollectionView;
 
 export class HoardViewStore {
-    readonly view: HoardView;
+    readonly view: Hoardview;
 
     source = $state<HoardCollection | null>(null);
     views = $state<CollectionView[]>([]);
@@ -49,12 +49,12 @@ export class HoardViewStore {
     }
 
 
-    constructor(view: HoardView) {
+    constructor(view: Hoardview) {
         this.view = view;
     }
 
 
-    static mount(view: HoardView) {
+    static mount(view: Hoardview) {
         const store = view.store;
 
         setContext(contextKey, store);

@@ -1,4 +1,4 @@
-import type { CompletionEnum, Task } from "../lib/pb";
+import type { CompletionEnum, Task } from "../../lib/pb";
 
 
 export type TaskGraph = {

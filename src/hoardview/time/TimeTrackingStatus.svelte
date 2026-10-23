@@ -1,7 +1,7 @@
 <!-- #region TODO needs review -->
 
 <script lang="ts">
-    import { getPbStore, formatMs } from "../lib/datahoard/pbStore.svelte";
+    import { getPbStore, formatMs } from "../../lib/datahoard/pbStore.svelte";
 
     const store = getPbStore();
     const activePeriod = $derived(store.activeTimePeriod);

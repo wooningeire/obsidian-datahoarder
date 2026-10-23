@@ -1,12 +1,12 @@
 import { TextFileView, type TFile, type WorkspaceLeaf } from "obsidian";
 import { mount, unmount } from "svelte";
-import HoardViewFileView from "./HoardViewFileView.svelte";
+import HoardviewView from "./HoardviewView.svelte";
 import { HoardViewStore } from "./HoardViewStore.svelte";
 import type { PbStore } from "../lib/datahoard/pbStore.svelte";
 
 export const VIEW_TYPE_HOARD = "hoard-view";
 
-export class HoardView extends TextFileView {
+export class Hoardview extends TextFileView {
     private component: ReturnType<typeof mount> | null = null;
     readonly store = new HoardViewStore(this);
 
@@ -34,7 +34,7 @@ export class HoardView extends TextFileView {
 
         await super.onLoadFile(file);
 
-        this.component = mount(HoardViewFileView, {
+        this.component = mount(HoardviewView, {
             target: this.contentEl,
             props: {
                 view: this,

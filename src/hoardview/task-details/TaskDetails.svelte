@@ -1,9 +1,9 @@
 <script lang="ts">
     import type { Task } from "../../lib/pb";
 import { HoardViewStore } from "../HoardViewStore.svelte";
-import { taskAncestors } from "../taskGraph";
+import { taskAncestors } from "../task/taskGraph";
 import TaskClock from "../../lib/datahoard/TaskClock.svelte";
-import TaskNoteLink from "../TaskNoteLink.svelte";
+import TaskNoteLink from "../task/TaskNoteLink.svelte";
 import TimeHistory from "./TimeHistory.svelte";
 
 let {
