@@ -59,7 +59,7 @@ export class HoardView extends TextFileView {
             this.store.clear();
         }
         
-        this.store.setFileContents(data);
+        await this.store.setFileContents(data);
     }
 
     clear(): void {

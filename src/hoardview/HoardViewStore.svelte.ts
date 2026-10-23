@@ -6,7 +6,7 @@ import type { Task, TimePeriod } from "../lib/pb";
 import { createTaskGraph } from "./taskGraph";
 import type { CollectionView, derived } from "../collections/collection";
 import { selectTasks, taskValue } from "../collections/tasks";
-import { parseViews } from "./viewConfig";
+import { serveVaultModule } from "./serveVaultModule";
 
 
 const contextKey = Symbol("datahoarder store context");
@@ -73,21 +73,23 @@ export class HoardViewStore {
 
 
     async setFileContents(data: string) {
-        let url = URL.createObjectURL(new Blob([data], {
-            type: "text/javascript",
-        }));
-        console.log(url, data);
-        
+        let close: (() => void) | undefined;
+
         try {
+            const module = await serveVaultModule(
+                this.view.app.vault.adapter,
+                this.view.file?.path ?? "",
+                data,
+            );
+            close = module.close;
+
             const {
                 source,
                 views,
             }: {
                 source: HoardCollection,
                 views: CollectionView[],
-            } = await import(url);
-
-            console.log(source, views);
+            } = await import(module.url);
 
             this.source = source;
             this.views = views;
@@ -99,7 +101,7 @@ export class HoardViewStore {
 
             this.error = error instanceof Error ? error.message : String(error);
         } finally {
-            URL.revokeObjectURL(url);
+            close?.();
         }
         
         if (this.viewIndex >= this.views.length) {

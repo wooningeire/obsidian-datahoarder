@@ -33,10 +33,6 @@ export const taskFields: Record<string, TaskField> = {
 
 
 export const taskValue = (task: Task, column: string, source: TaskSource): unknown => {
-    const field = definition.schema[column];
-    if (typeof field === "object" && field.derive) {
-        return field.derive({ record: task, value: column => taskValue(task, column, source) });
-    }
     switch (column) {
         case "Parents": return task.parent_tasks.map(id => source.tasksById.get(id)?.label ?? id);
         case "Dependencies": return task.dependency_tasks.map(id => source.tasksById.get(id)?.label ?? id);
