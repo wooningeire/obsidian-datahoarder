@@ -1,6 +1,6 @@
 <script lang="ts">
 import { tick } from "svelte";
-import type { Task } from "../lib/pb";
+import type { Task, TaskPatch } from "../lib/pb";
 import { toDatetimeLocal } from "../lib/datahoard/pbStore.svelte";
 import { taskFields } from "../collections/tasks";
 import { HoardViewStore } from "./HoardViewStore.svelte";
@@ -8,11 +8,21 @@ import Popover from "../components/Popover.svelte";
 import EditPopover from "../components/EditPopover.svelte";
 import TaskMultiSelect from "./TaskMultiSelect.svelte";
 
-let { task, column }: { task: Task, column: string } = $props();
+let {
+    task,
+    column,
+    onSave,
+}: {
+    task: Partial<Task>,
+    column: string,
+    onSave?: (patch: TaskPatch) => void,
+} = $props();
 
 const store = HoardViewStore.use();
+
 const field = $derived(taskFields[column]);
 let current = $derived(field ? task[field.field] : "");
+
 const value = $derived(store.valueForTask(task, column));
 const inputType = $derived(field?.type === "date" ? "datetime-local" : field?.type ?? "text");
 const options = $derived.by(() => {
@@ -62,7 +72,7 @@ const save = async (next: string | Set<string>): Promise<void> => {
     if (!field || store.pb.busy) return;
     error = "";
     await store.pb.run(async () => {
-        let value: string | number | Set<string> = next;
+        let value: string | number | string[] = next instanceof Set ? [...next] : next;
         if (field.type === "text") {
             value = String(next).trim();
             if (!value) throw new Error("Enter a task name.");
@@ -70,7 +80,9 @@ const save = async (next: string | Set<string>): Promise<void> => {
         if (field.type === "number") value = Number(next);
         if (field.type === "date") value = next ? new Date(String(next)).toISOString() : "";
         if (field.type !== "date" || next !== toDatetimeLocal(String(current ?? ""))) {
-            await store.pb.updateTask(task.id, { [field.field]: value });
+            const patch = { [field.field]: value };
+            if (onSave) onSave(patch);
+            else if (task.id) await store.pb.updateTask(task.id, patch);
         }
         close();
     });
@@ -110,6 +122,7 @@ const save = async (next: string | Set<string>): Promise<void> => {
         onclick={edit}
         oncontextmenu={edit}
     >{value || "—"}</button>
+    
     {#if editing && trigger}
         {#if field.multiple}
             <TaskMultiSelect

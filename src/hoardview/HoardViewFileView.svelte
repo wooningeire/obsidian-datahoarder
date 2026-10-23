@@ -72,7 +72,9 @@ let hoardviewTaskListBounds = $derived.by(() => {
                 <p role="alert">{store.error}</p>
             {:else if store.collectionView && store.collectionView.type !== "calendar"}
                 <task-list-panel>
-                    <TaskCreateBar />
+                    {#if store.collectionView.type !== "table"}
+                        <TaskCreateBar />
+                    {/if}
 
                     {#if store.collectionView.type !== "list"}
                         {#key store.viewIndex}
@@ -112,17 +114,17 @@ let hoardviewTaskListBounds = $derived.by(() => {
                 </calendar-panel>
             {/if}
         </hoardview-tasks>
-
-        <task-details-panel>
-            {#if store.selectedTask !== null}
+        
+        {#if store.selectedTask !== null}
+            <task-details-panel>
                 <TaskDetails task={store.selectedTask} />
-            {:else if store.selectedPeriod}
+            </task-details-panel>
+        {:else if store.selectedPeriod}
+            <task-details-panel>
                 <TimePeriodDetails />
-            {:else}
-                no task selected
-            {/if}
-        </task-details-panel>
-    </hoardview-file-view>
+            </task-details-panel>
+        {/if}
+        </hoardview-file-view>
 </hoardview-container>
 
 <style lang="scss">
@@ -133,10 +135,9 @@ hoardview-container {
 }
 
 hoardview-file-view {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
     gap: 0.5em;
-    place-items: stretch;
+    align-items: stretch;
 
     height: 100%;
 
@@ -144,6 +145,16 @@ hoardview-file-view {
         min-width: 0;
         min-height: 0;
     }
+}
+
+hoardview-tasks {
+    flex-basis: 0;
+    flex-grow: 1;
+}
+
+task-details-panel {
+    flex-basis: 0;
+    flex-grow: 1;
 }
 
 hoardview-tasks,

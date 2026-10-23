@@ -61,7 +61,7 @@ export class HoardViewStore {
         setContext(PB_CONTEXT_KEY, store.pb);
 
         onMount(() => {
-            void store.pb.run(() => store.pb.loadAll());
+            store.pb.run(() => store.pb.loadAll());
         });
 
         return store;
@@ -119,7 +119,7 @@ export class HoardViewStore {
     }
 
 
-    valueForTask = (task: Task, column: string): string => {
+    valueForTask = (task: Partial<Task>, column: string): string => {
         const value = taskValue(task, column, this.pb);
         return Array.isArray(value) ? value.join(", ") : String(value ?? "");
     };
@@ -134,8 +134,8 @@ export class HoardViewStore {
         this.selectedPeriodId = period.id;
     };
 
-    createTask = async (label: string): Promise<void> => {
-        const task = await this.pb.addTask(label);
+    createTask = async (fields: Partial<Task>): Promise<void> => {
+        const task = await this.pb.addTask(fields);
         this.selectTask(task.id);
     };
 

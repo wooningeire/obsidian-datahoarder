@@ -13,7 +13,7 @@ const submit = async (event: SubmitEvent): Promise<void> => {
     submitting = true;
     error = "";
     await store.pb.run(async () => {
-        await store.createTask(label);
+        await store.createTask({ label: label.trim() });
         label = "";
     });
     error = store.pb.error;

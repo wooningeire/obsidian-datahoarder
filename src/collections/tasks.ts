@@ -32,19 +32,19 @@ export const taskFields: Record<string, TaskField> = {
 };
 
 
-export const taskValue = (task: Task, column: string, source: TaskSource): unknown => {
+export const taskValue = (task: Partial<Task>, column: string, source: TaskSource): unknown => {
     switch (column) {
-        case "Parents": return task.parent_tasks.map(id => source.tasksById.get(id)?.label ?? id);
-        case "Dependencies": return task.dependency_tasks.map(id => source.tasksById.get(id)?.label ?? id);
+        case "Parents": return (task.parent_tasks ?? []).map(id => source.tasksById.get(id)?.label ?? id);
+        case "Dependencies": return (task.dependency_tasks ?? []).map(id => source.tasksById.get(id)?.label ?? id);
         case "Priority": return source.priorities.find(row => row.id === task.priority)?.label ?? task.priority;
         case "Completion": return source.completions.find(row => row.id === task.completion)?.label ?? task.completion;
         case "Term": return source.terms.find(row => row.id === task.term)?.label ?? task.expand?.term?.label ?? task.term;
-        case "Categories": return task.categories.map(id => (
+        case "Categories": return (task.categories ?? []).map(id => (
             source.categories.find(row => row.id === id)?.label
             ?? task.expand?.categories?.find(row => row.id === id)?.label
             ?? id
         ));
-        case "Hr completed": return source.totalTime(task.id) / 3600000;
+        case "Hr completed": return task.id ? source.totalTime(task.id) / 3600000 : 0;
     }
     return task[taskFields[column]?.field ?? column as keyof Task];
 };

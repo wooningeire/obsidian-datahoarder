@@ -60,7 +60,7 @@ export class PbStore {
         this.ready = true;
 	}
 
-    run = async (action: () => Promise<unknown>): Promise<void> => {
+    async run(action: () => Promise<unknown>) {
         if (this.busy) return;
         this.busy = true;
         this.error = "";
@@ -72,7 +72,7 @@ export class PbStore {
         } finally {
             this.busy = false;
         }
-    };
+    }
 
 	destroy() {
 		if (this.reqFrame !== undefined) cancelAnimationFrame(this.reqFrame);
@@ -136,12 +136,9 @@ export class PbStore {
 		this.timePeriods = [period, ...this.timePeriods];
 	}
 
-    addTask = async (label: string): Promise<Task> => {
-        const trimmedLabel = label.trim();
-        if (!trimmedLabel) throw new Error("Enter a task name.");
-
+    async addTask(fields: Partial<Task>) {
         await this.beforeLoad();
-        const task = await create<Task>("tasks", { label: trimmedLabel });
+        const task = await create<Task>("tasks", fields);
         this.tasks = [task, ...this.tasks];
         return task;
     };
